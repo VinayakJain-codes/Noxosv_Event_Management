@@ -29,6 +29,7 @@ import {PlatformFeesSettings} from "./Sections/PlatformFeesSettings";
 import {WaitlistSettings} from "./Sections/WaitlistSettings";
 import {RecurringEventSettings} from "./Sections/RecurringEventSettings";
 import {DangerZoneSettings} from "./Sections/DangerZoneSettings";
+import {EnrollmentSettings} from "./Sections/EnrollmentSettings";
 import {useGetAccount} from "../../../../queries/useGetAccount.ts";
 import {useGetEvent} from "../../../../queries/useGetEvent.ts";
 import {useParams} from "react-router";
@@ -90,6 +91,12 @@ export const Settings = () => {
                 label: t`Waitlist`,
                 icon: IconListCheck,
                 component: WaitlistSettings,
+            },
+            {
+                id: 'enrollment-settings',
+                label: t`Enrollments`,
+                icon: IconListCheck,
+                component: EnrollmentSettings,
             },
             {
                 id: 'payment-settings',

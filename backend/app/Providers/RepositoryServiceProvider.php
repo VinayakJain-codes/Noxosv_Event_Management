@@ -16,9 +16,11 @@ use HiEvents\Repository\Eloquent\AnnouncementUserRepository;
 use HiEvents\Repository\Eloquent\AttendeeCheckInRepository;
 use HiEvents\Repository\Eloquent\AttendeeRepository;
 use HiEvents\Repository\Eloquent\CapacityAssignmentRepository;
+use HiEvents\Repository\Eloquent\RazorpayPaymentRepository;
 use HiEvents\Repository\Eloquent\CheckInListRepository;
 use HiEvents\Repository\Eloquent\EmailTemplateRepository;
 use HiEvents\Repository\Eloquent\EventDailyStatisticRepository;
+use HiEvents\Repository\Eloquent\EventEnrollmentRepository;
 use HiEvents\Repository\Eloquent\EventLocationRepository;
 use HiEvents\Repository\Eloquent\EventOccurrenceDailyStatisticRepository;
 use HiEvents\Repository\Eloquent\EventOccurrenceRepository;
@@ -74,9 +76,11 @@ use HiEvents\Repository\Interfaces\AnnouncementUserRepositoryInterface;
 use HiEvents\Repository\Interfaces\AttendeeCheckInRepositoryInterface;
 use HiEvents\Repository\Interfaces\AttendeeRepositoryInterface;
 use HiEvents\Repository\Interfaces\CapacityAssignmentRepositoryInterface;
+use HiEvents\Repository\Interfaces\RazorpayPaymentRepositoryInterface;
 use HiEvents\Repository\Interfaces\CheckInListRepositoryInterface;
 use HiEvents\Repository\Interfaces\EmailTemplateRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventDailyStatisticRepositoryInterface;
+use HiEvents\Repository\Interfaces\EventEnrollmentRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventLocationRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventOccurrenceDailyStatisticRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventOccurrenceRepositoryInterface;
@@ -140,6 +144,7 @@ class RepositoryServiceProvider extends ServiceProvider
         OrderItemRepositoryInterface::class => OrderItemRepository::class,
         QuestionRepositoryInterface::class => QuestionRepository::class,
         QuestionAnswerRepositoryInterface::class => QuestionAnswerRepository::class,
+        RazorpayPaymentRepositoryInterface::class => RazorpayPaymentRepository::class,
         StripePaymentsRepositoryInterface::class => StripePaymentsRepository::class,
         PromoCodeRepositoryInterface::class => PromoCodeRepository::class,
         MessageRepositoryInterface::class => MessageRepository::class,
@@ -186,6 +191,7 @@ class RepositoryServiceProvider extends ServiceProvider
         ProductPriceOccurrenceOverrideRepositoryInterface::class => ProductPriceOccurrenceOverrideRepository::class,
         LocationRepositoryInterface::class => LocationRepository::class,
         EventLocationRepositoryInterface::class => EventLocationRepository::class,
+        EventEnrollmentRepositoryInterface::class => EventEnrollmentRepository::class,
     ];
 
     public function register(): void

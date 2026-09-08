@@ -1,17 +1,26 @@
 import {useForm} from "@mantine/form";
-import {GenericModalProps, InviteUserRequest,} from "../../../types.ts";
+import {GenericModalProps, InviteUserRequest, QueryFilters, User} from "../../../types.ts";
 import {Modal} from "../../common/Modal";
-import {Button, SimpleGrid, TextInput} from "@mantine/core";
+import {Button, MultiSelect, SimpleGrid, TextInput} from "@mantine/core";
 import {useFormErrorResponseHandler} from "../../../hooks/useFormErrorResponseHandler.tsx";
-import {t, Trans} from "@lingui/macro";
+import {t} from "@lingui/macro";
 import {useInviteUser} from "../../../mutations/useInviteUser.ts";
 import {CustomSelect, ItemProps} from "../../common/CustomSelect";
-import {IconUser, IconUserShield} from "@tabler/icons-react";
-import {showSuccess} from "../../../utilites/notifications.tsx";
+import {IconEye, IconUser, IconUserShield} from "@tabler/icons-react";
+import {useGetEvents} from "../../../queries/useGetEvents.ts";
+import {useState} from "react";
+import {CredentialsModal} from "../CredentialsModal";
 
 export const InviteUserModal = ({onClose}: GenericModalProps) => {
     const createMutation = useInviteUser();
     const formErrorHandler = useFormErrorResponseHandler();
+    const [createdUser, setCreatedUser] = useState<User | null>(null);
+
+    const {data: eventsData} = useGetEvents({perPage: 100} as QueryFilters);
+    const eventOptions = eventsData?.data?.map((event) => ({
+        value: String(event.id),
+        label: event.title,
+    })) || [];
 
     const form = useForm<InviteUserRequest>({
         initialValues: {
@@ -19,17 +28,29 @@ export const InviteUserModal = ({onClose}: GenericModalProps) => {
             first_name: '',
             last_name: '',
             role: 'ADMIN',
+            event_ids: [],
         },
+        validate: {
+            event_ids: (value, values) => {
+                if (values.role === 'VIEWER' && (!value || value.length === 0)) {
+                    return t`Please select at least one assigned event for the viewer.`;
+                }
+                return null;
+            }
+        }
     });
 
     const handleCreate = (values: InviteUserRequest) => {
         createMutation.mutate({
             inviteUserData: values,
         }, {
-            onSuccess: () => {
+            onSuccess: (response: any) => {
                 form.reset();
-                onClose();
-                showSuccess(<Trans>Success! {values.first_name} will receive an email shortly.</Trans>);
+                if (response?.data) {
+                    setCreatedUser(response.data);
+                } else {
+                    onClose();
+                }
             },
             onError: (error: any) => formErrorHandler(form, error)
         });
@@ -48,7 +69,25 @@ export const InviteUserModal = ({onClose}: GenericModalProps) => {
             value: 'ORGANIZER',
             description: t`Organizers can only manage events and products. They cannot manage users, account settings or billing information.`,
         },
+        {
+            icon: <IconEye/>,
+            label: t`Viewer`,
+            value: 'VIEWER',
+            description: t`Viewers can only view attendees, orders, and scan attendee QR codes for assigned events.`,
+        },
     ];
+
+    if (createdUser) {
+        return (
+            <CredentialsModal
+                user={createdUser}
+                onClose={() => {
+                    setCreatedUser(null);
+                    onClose();
+                }}
+            />
+        );
+    }
 
     return (
         <Modal heading={t`Invite a team member`} onClose={onClose} opened modalHeader={'branded'}>
@@ -67,6 +106,21 @@ export const InviteUserModal = ({onClose}: GenericModalProps) => {
                     name={'role'}
                 />
 
+                {form.values.role === 'VIEWER' && (
+                    <MultiSelect
+                        label={t`Assigned Events`}
+                        description={t`Select the event(s) this viewer is allowed to access.`}
+                        placeholder={t`Select one or more events`}
+                        data={eventOptions}
+                        searchable
+                        clearable
+                        required
+                        value={form.values.event_ids?.map(String) || []}
+                        onChange={(selected) => form.setFieldValue('event_ids', selected.map(Number))}
+                        error={form.errors.event_ids}
+                    />
+                )}
+
                 <Button
                     fullWidth
                     loading={createMutation.isPending}
@@ -75,5 +129,5 @@ export const InviteUserModal = ({onClose}: GenericModalProps) => {
                 </Button>
             </form>
         </Modal>
-    )
-}
+    );
+};

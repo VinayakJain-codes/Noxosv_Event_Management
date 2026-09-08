@@ -1,17 +1,18 @@
 import {useForm} from "@mantine/form";
-import {GenericModalProps, User,} from "../../../types.ts";
+import {GenericModalProps, QueryFilters, User} from "../../../types.ts";
 import {Modal} from "../../common/Modal";
-import {Button, Select, TextInput} from "@mantine/core";
+import {Button, MultiSelect, Select, TextInput} from "@mantine/core";
 import {Callout} from "../../common/Callout";
 import {useFormErrorResponseHandler} from "../../../hooks/useFormErrorResponseHandler.tsx";
 import {t, Trans} from "@lingui/macro";
 import {CustomSelect, ItemProps} from "../../common/CustomSelect";
-import {IconUser, IconUserShield} from "@tabler/icons-react";
+import {IconEye, IconUser, IconUserShield} from "@tabler/icons-react";
 import {showSuccess} from "../../../utilites/notifications.tsx";
 import {UpdateUserRequest} from "../../../api/user.client.ts";
 import {useEditUser} from "../../../mutations/useEditUser.ts";
 import {NavLink} from "react-router";
 import {InputGroup} from "../../common/InputGroup";
+import {useGetEvents} from "../../../queries/useGetEvents.ts";
 
 interface EditUserModalProps extends GenericModalProps {
     user: User;
@@ -21,13 +22,28 @@ export const EditUserModal = ({onClose, user}: EditUserModalProps) => {
     const ediMutation = useEditUser();
     const formErrorHandler = useFormErrorResponseHandler();
 
+    const {data: eventsData} = useGetEvents({perPage: 100} as QueryFilters);
+    const eventOptions = eventsData?.data?.map((event) => ({
+        value: String(event.id),
+        label: event.title,
+    })) || [];
+
     const form = useForm<UpdateUserRequest>({
         initialValues: {
             first_name: user.first_name,
             last_name: user.last_name,
             status: String(user.status),
             role: String(user.role),
+            event_ids: user.assigned_event_ids || [],
         },
+        validate: {
+            event_ids: (value, values) => {
+                if (values.role === 'VIEWER' && (!value || value.length === 0)) {
+                    return t`Please select at least one assigned event for the viewer.`;
+                }
+                return null;
+            }
+        }
     });
 
     const handleCreate = (values: UpdateUserRequest) => {
@@ -38,7 +54,7 @@ export const EditUserModal = ({onClose, user}: EditUserModalProps) => {
             onSuccess: () => {
                 form.reset();
                 onClose();
-                showSuccess(<Trans>Success! {values.first_name} will receive an email shortly.</Trans>);
+                showSuccess(<Trans>User updated successfully.</Trans>);
             },
             onError: (error) => formErrorHandler(form, error)
         });
@@ -56,6 +72,12 @@ export const EditUserModal = ({onClose, user}: EditUserModalProps) => {
             label: t`Organizer`,
             value: 'ORGANIZER',
             description: t`Organizers can only manage events and products. They cannot manage users, account settings or billing information.`,
+        },
+        {
+            icon: <IconEye/>,
+            label: t`Viewer`,
+            value: 'VIEWER',
+            description: t`Viewers can only view attendees, orders, and scan attendee QR codes for assigned events.`,
         },
     ];
 
@@ -98,6 +120,22 @@ export const EditUserModal = ({onClose, user}: EditUserModalProps) => {
                         disabled={user.is_account_owner}
                     />
 
+                    {form.values.role === 'VIEWER' && (
+                        <MultiSelect
+                            label={t`Assigned Events`}
+                            description={t`Select the event(s) this viewer is allowed to access.`}
+                            placeholder={t`Select one or more events`}
+                            data={eventOptions}
+                            searchable
+                            clearable
+                            required
+                            disabled={user.is_account_owner}
+                            value={form.values.event_ids?.map(String) || []}
+                            onChange={(selected) => form.setFieldValue('event_ids', selected.map(Number))}
+                            error={form.errors.event_ids}
+                        />
+                    )}
+
                     {user.status !== 'INVITED' && (
                         <Select
                             disabled={user.is_account_owner}
@@ -122,5 +160,5 @@ export const EditUserModal = ({onClose, user}: EditUserModalProps) => {
                 </Button>
             </form>
         </Modal>
-    )
-}
+    );
+};

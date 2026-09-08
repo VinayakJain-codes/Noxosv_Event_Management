@@ -24,6 +24,7 @@ import {downloadBinary} from "../utilites/download.ts";
 import {withLoadingNotification} from "../utilites/withLoadingNotification.tsx";
 import {showError, showSuccess} from "../utilites/notifications.tsx";
 import {eventCheckoutUrl} from "../utilites/urlHelper.ts";
+import {useGetMe} from "../queries/useGetMe.ts";
 
 interface UseOrderActionsOptions {
     eventId: IdParam;
@@ -32,6 +33,8 @@ interface UseOrderActionsOptions {
 }
 
 export const useOrderActions = ({eventId, onManage, onEdit}: UseOrderActionsOptions) => {
+    const {data: me} = useGetMe();
+    const isViewer = me?.role === 'VIEWER';
     const [isCancelModalOpen, cancelModal] = useDisclosure(false);
     const [isMessageModalOpen, messageModal] = useDisclosure(false);
     const [isRefundModalOpen, refundModal] = useDisclosure(false);
@@ -88,7 +91,8 @@ export const useOrderActions = ({eventId, onManage, onEdit}: UseOrderActionsOpti
     };
 
     const getOrderActions = (order: Order): EntityAction[] => {
-        const isRefundable = !order.is_free_order
+        const isRefundable = !isViewer
+            && !order.is_free_order
             && order.status !== 'AWAITING_OFFLINE_PAYMENT'
             && order.payment_provider === 'STRIPE'
             && order.refund_status !== 'REFUNDED';
@@ -101,7 +105,7 @@ export const useOrderActions = ({eventId, onManage, onEdit}: UseOrderActionsOpti
                 onClick: () => onManage(order),
                 group: 'primary',
             },
-            !!onEdit && {
+            (!isViewer && !!onEdit) && {
                 key: 'edit',
                 label: t`Edit`,
                 icon: <IconPencil size={14}/>,
@@ -109,21 +113,21 @@ export const useOrderActions = ({eventId, onManage, onEdit}: UseOrderActionsOpti
                 group: 'primary',
                 dataTestId: 'order-edit-button',
             },
-            {
+            !isViewer && {
                 key: 'message',
                 label: t`Message buyer`,
                 icon: <IconSend size={14}/>,
                 onClick: () => openModal(order, messageModal),
                 group: 'primary',
             },
-            order.status === 'COMPLETED' && {
+            (!isViewer && order.status === 'COMPLETED') && {
                 key: 'resend',
                 label: t`Resend order email`,
                 icon: <IconRepeat size={14}/>,
                 onClick: () => handleResendConfirmation(order),
                 group: 'primary',
             },
-            order.status === 'AWAITING_OFFLINE_PAYMENT' && {
+            (!isViewer && order.status === 'AWAITING_OFFLINE_PAYMENT') && {
                 key: 'mark-as-paid',
                 label: t`Mark as paid`,
                 icon: <IconReceiptDollar size={14}/>,
@@ -151,7 +155,7 @@ export const useOrderActions = ({eventId, onManage, onEdit}: UseOrderActionsOpti
                 onClick: () => handleInvoiceDownload(order.latest_invoice as Invoice),
                 group: 'secondary',
             },
-            order.status !== 'CANCELLED' && {
+            (!isViewer && order.status !== 'CANCELLED') && {
                 key: 'cancel',
                 label: t`Cancel order`,
                 icon: <IconTrash size={14}/>,

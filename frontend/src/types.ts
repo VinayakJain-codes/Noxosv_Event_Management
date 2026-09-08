@@ -20,6 +20,7 @@ export type ConfigKeys =
     | 'VITE_PRIVACY_URL'
     | 'VITE_PLATFORM_SUPPORT_EMAIL'
     | 'VITE_STRIPE_PUBLISHABLE_KEY'
+    | 'VITE_RAZORPAY_KEY_ID'
     | 'VITE_I_HAVE_PURCHASED_A_LICENCE'
     | 'VITE_DEFAULT_IMAGE_URL'
     | 'VITE_COOKIE_CONSENT_ENABLED'
@@ -103,10 +104,12 @@ export interface User {
     pending_email?: string;
     last_login_at?: string;
     status?: 'ACTIVE' | 'INACTIVE' | 'INVITED';
-    role?: 'ADMIN' | 'ORGANIZER' | 'SUPERADMIN';
+    role?: 'ADMIN' | 'ORGANIZER' | 'SUPERADMIN' | 'VIEWER';
     is_account_owner?: boolean;
     locale?: SupportedLocales;
     marketing_opted_in_at?: string | null;
+    temporary_password?: string;
+    assigned_event_ids?: number[];
 }
 
 export interface Account {
@@ -218,7 +221,7 @@ export interface Image {
 
 export type ImageType = 'EVENT_COVER' | 'EDITOR_IMAGE' | 'ORGANIZER_LOGO' | 'ORGANIZER_COVER' | 'ORGANIZER_IMAGE' | 'TICKET_LOGO';
 
-export type PaymentProvider = 'STRIPE' | 'OFFLINE';
+export type PaymentProvider = 'STRIPE' | 'OFFLINE' | 'RAZORPAY';
 
 export type AttendeeDetailsCollectionMethod = 'PER_TICKET' | 'PER_ORDER';
 
@@ -286,6 +289,10 @@ export interface EventSettings {
 
     // Self-service settings
     allow_attendee_self_edit?: boolean;
+
+    // Enrollment settings
+    enrollment_enabled?: boolean;
+    enrollment_restrict_to_one_ticket?: boolean;
 
     // Simplified homepage theme settings (new 2-color + mode system)
     homepage_theme_settings?: HomepageThemeSettings;
@@ -1253,6 +1260,7 @@ export interface InviteUserRequest {
     first_name: string;
     last_name: string;
     role: string;
+    event_ids?: number[];
 }
 
 export interface SortableItem {

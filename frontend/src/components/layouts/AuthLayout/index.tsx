@@ -150,7 +150,7 @@ const AuthLayout = () => {
                         <div className={classes.logo} onClick={handleLogoClick} style={{cursor: 'pointer'}}>
                             <img
                                 src={getConfig("VITE_APP_LOGO_DARK", "/logos/hi-events-horizontal-light.svg")}
-                                alt={t`${getConfig("VITE_APP_NAME", "Hi.Events")} logo`}
+                                alt={t`${getConfig("VITE_APP_NAME", "Manav Samaj Setu Foundation Events")} logo`}
                             />
                         </div>
                         <div className={classes.formArea}>
@@ -168,7 +168,7 @@ const AuthLayout = () => {
                              *
                              * You can find the full license text at: https://github.com/HiEventsDev/hi.events/blob/main/LICENCE
                              *
-                             * In accordance with Section 7(b) of the AGPL, we ask that you retain the "Powered by Hi.Events" notice.
+                             * In accordance with Section 7(b) of the AGPL, we ask that you retain the "Powered by Manav Samaj Setu Foundation Events" notice.
                              *
                              * If you wish to remove this notice, a commercial license is available at: https://hi.events/licensing
                              */}

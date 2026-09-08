@@ -26,6 +26,7 @@ class OrderDomainObject extends Generated\OrderDomainObjectAbstract implements I
     public ?Collection $attendees = null;
 
     public ?StripePaymentDomainObject $stripePayment = null;
+    public ?RazorpayPaymentDomainObject $razorpayPayment = null;
 
     /** @var Collection<QuestionAndAnswerViewDomainObject>|null */
     public ?Collection $questionAndAnswerViews = null;
@@ -292,8 +293,20 @@ class OrderDomainObject extends Generated\OrderDomainObjectAbstract implements I
     {
         return ! $this->isFreeOrder()
             && $this->getStatus() !== OrderPaymentStatus::AWAITING_OFFLINE_PAYMENT->name
-            && $this->getPaymentProvider() === PaymentProviders::STRIPE->name
+            && ($this->getPaymentProvider() === PaymentProviders::RAZORPAY->name || $this->getPaymentProvider() === PaymentProviders::STRIPE->name)
             && $this->getRefundStatus() !== OrderRefundStatus::REFUNDED->name;
+    }
+
+    public function getRazorpayPayment(): ?RazorpayPaymentDomainObject
+    {
+        return $this->razorpayPayment;
+    }
+
+    public function setRazorpayPayment(?RazorpayPaymentDomainObject $razorpayPayment): self
+    {
+        $this->razorpayPayment = $razorpayPayment;
+
+        return $this;
     }
 
     public function getAddressDTO(): ?AddressDTO

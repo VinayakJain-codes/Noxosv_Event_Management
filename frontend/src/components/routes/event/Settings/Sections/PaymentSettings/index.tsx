@@ -35,7 +35,7 @@ export const PaymentAndInvoicingSettings = () => {
             invoice_payment_terms_days: null as number | null,
             invoice_notes: "",
         },
-        transformValues: (values) => ({
+        transformValues: (values: any) => ({
             ...values,
             payment_providers: Array.isArray(values.payment_providers) ? values.payment_providers : [],
             offline_payment_instructions: isEmptyHtml(values.offline_payment_instructions) ? null : values.offline_payment_instructions,
@@ -48,8 +48,9 @@ export const PaymentAndInvoicingSettings = () => {
 
     useEffect(() => {
         if (eventSettingsQuery?.isFetched && eventSettingsQuery?.data) {
+            const currentProviders = (eventSettingsQuery.data.payment_providers || []).map((p: any) => p === 'STRIPE' || p === 'CASHFREE' ? 'RAZORPAY' : p);
             form.setValues({
-                payment_providers: eventSettingsQuery.data.payment_providers || [],
+                payment_providers: currentProviders as PaymentProvider[],
                 offline_payment_instructions: eventSettingsQuery.data.offline_payment_instructions || "",
                 allow_orders_awaiting_offline_payment_to_check_in: eventSettingsQuery.data.allow_orders_awaiting_offline_payment_to_check_in || false,
                 enable_invoicing: eventSettingsQuery.data.enable_invoicing || false,
@@ -74,7 +75,7 @@ export const PaymentAndInvoicingSettings = () => {
             onSuccess: () => {
                 showSuccess(t`Successfully Updated Payment & Invoicing Settings`);
             },
-            onError: (error) => {
+            onError: (error: any) => {
                 formErrorHandle(form, error);
             },
         });
@@ -82,9 +83,9 @@ export const PaymentAndInvoicingSettings = () => {
 
     const paymentOptions = [
         {
-            value: "STRIPE",
-            label: t`Stripe`,
-            description: t`Accept credit card payments with Stripe`
+            value: "RAZORPAY",
+            label: t`Razorpay Payments`,
+            description: t`Accept UPI, Cards, Net Banking, and Wallets with Razorpay`
         },
         {
             value: "OFFLINE",
@@ -110,14 +111,14 @@ export const PaymentAndInvoicingSettings = () => {
                                     label={option.label}
                                     description={option.description}
                                     checked={form.values.payment_providers?.includes(option.value as PaymentProvider)}
-                                    onChange={(event) => {
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                                         const checked = event.currentTarget.checked;
                                         const currentValues = form.values.payment_providers || [];
                                         form.setFieldValue(
                                             'payment_providers',
                                             checked
                                                 ? [...currentValues, option.value as PaymentProvider]
-                                                : currentValues.filter(v => v !== option.value)
+                                                : currentValues.filter((v: any) => v !== option.value)
                                         );
                                     }}
                                     mb="sm"
@@ -179,7 +180,7 @@ export const PaymentAndInvoicingSettings = () => {
                                 label={t`Require Billing Address`}
                                 description={t`Make billing address mandatory during checkout`}
                                 checked={form.values.require_billing_address}
-                                onChange={(event) => form.setFieldValue('require_billing_address', event.currentTarget.checked)}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => form.setFieldValue('require_billing_address', event.currentTarget.checked)}
                             />
                         </Paper>
 
@@ -191,7 +192,7 @@ export const PaymentAndInvoicingSettings = () => {
                                     label={t`Enable Invoicing`}
                                     description={t`When enabled, invoices will be generated for ticket orders. Invoices will sent along with the order confirmation email. Attendees can also download their invoices from the order confirmation page.`}
                                     checked={form.values.enable_invoicing}
-                                    onChange={(event) => form.setFieldValue('enable_invoicing', event.currentTarget.checked)}
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => form.setFieldValue('enable_invoicing', event.currentTarget.checked)}
                                 />
 
                                 {form.values.enable_invoicing && (

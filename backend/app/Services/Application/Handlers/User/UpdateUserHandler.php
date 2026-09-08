@@ -85,6 +85,10 @@ class UpdateUserHandler
             ]
         );
 
+        if ($updateUserData->event_ids !== null) {
+            $this->userRepository->syncAssignedEvents($updateUserData->id, $updateUserData->event_ids);
+        }
+
         $this->logger->info('User updated', [
             'id' => $updateUserData->id,
             'updated_by_user_id' => $updateUserData->updated_by_user_id,

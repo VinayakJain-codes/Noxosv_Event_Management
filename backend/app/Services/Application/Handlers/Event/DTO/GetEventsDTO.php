@@ -10,5 +10,7 @@ class GetEventsDTO extends BaseDTO
     public function __construct(
         public int $accountId,
         public QueryParamsDTO $queryParams,
+        public ?int $userId = null,
+        public ?string $userRole = null,
     ) {}
 }

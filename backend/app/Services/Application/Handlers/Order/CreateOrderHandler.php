@@ -62,6 +62,18 @@ class CreateOrderHandler
 
             $this->validateEventStatus($event, $createOrderPublicDTO);
 
+            if ($event->getEventSettings()?->getEnrollmentEnabled() && $event->getEventSettings()?->getEnrollmentRestrictToOneTicket()) {
+                $totalTickets = $createOrderPublicDTO->products->sum(
+                    fn (DTO\ProductOrderDetailsDTO $product) => $product->quantities->sum('quantity')
+                );
+
+                if ($totalTickets > 1) {
+                    throw ValidationException::withMessages([
+                        'products' => __('Only one ticket is allowed per order when enrollment restriction is enabled.'),
+                    ]);
+                }
+            }
+
             if ($deleteExistingOrdersForSession) {
                 $this->orderManagementService->deleteExistingOrders($eventId, $createOrderPublicDTO->session_identifier);
             }

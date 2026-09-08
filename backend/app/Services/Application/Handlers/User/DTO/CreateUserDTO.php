@@ -18,5 +18,7 @@ class CreateUserDTO extends BaseDataObject
 
         #[WithCast(EnumCast::class)]
         public Role $role,
+
+        public ?array $event_ids = null,
     ) {}
 }

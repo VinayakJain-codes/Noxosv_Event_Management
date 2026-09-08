@@ -25,6 +25,7 @@ class CompleteOrderRequest extends BaseRequest
                 'order.address.state_or_region' => ['nullable', 'string', 'max:85'],
                 'order.address.zip_or_postal_code' => ['nullable', 'string', 'max:85'],
                 'order.address.country' => ['nullable', 'string', 'max:2'],
+                'order.enrollment_no' => ['nullable', 'string', 'max:255'],
                 'products' => ['array'],
             ];
         }

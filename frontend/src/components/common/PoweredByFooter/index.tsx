@@ -14,7 +14,7 @@ import {getConfig} from "../../../utilites/config.ts";
  *
  * You can find the full license text at: https://github.com/HiEventsDev/hi.events/blob/main/LICENCE
  *
- * In accordance with Section 7(b) of the AGPL, you must retain the "Powered by Hi.Events" notice.
+ * In accordance with Section 7(b) of the AGPL, you must retain the "Powered by Manav Samaj Setu Foundation Events" notice.
  *
  * If you wish to remove this notice, a commercial license is available at: https://hi.events/licensing
  */
@@ -43,27 +43,15 @@ export const PoweredByFooter = (
         return url.toString();
     }, []);
 
-    const footerContent = isHiEvents() ? (
-        <>
-            {t`Planning an event?`}{" "}
-            <a
-                href={`${link}`}
-                target="_blank"
-                className={classes.ctaLink}
-                title={"Effortlessly manage events and sell tickets online with Hi.Events"}
-            >
-                {t`Try Hi.Events Free`}
-            </a>
-        </>
-    ) : (
+    const footerContent = (
         <>
             {t`Powered by`}{" "}
             <a
-                href={link}
+                href="https://noxsov.com"
                 target="_blank"
-                title={"Effortlessly manage events and sell tickets online with Hi.Events"}
+                title={"Effortlessly manage events and sell tickets online with Noxsov"}
             >
-                Hi.Events
+                Noxsov
             </a>{" "}
             🚀
         </>

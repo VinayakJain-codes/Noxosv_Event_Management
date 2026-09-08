@@ -86,6 +86,7 @@ use HiEvents\Http\Actions\CheckInLists\Public\GetCheckInListPublicAction;
 use HiEvents\Http\Actions\CheckInLists\Public\GetCheckInListStatsPublicAction;
 use HiEvents\Http\Actions\CheckInLists\UpdateCheckInListAction;
 use HiEvents\Http\Actions\Common\GetColorThemesAction;
+use HiEvents\Http\Actions\Common\Webhooks\RazorpayIncomingWebhookAction;
 use HiEvents\Http\Actions\Common\Webhooks\StripeIncomingWebhookAction;
 use HiEvents\Http\Actions\EmailTemplates\CreateEventEmailTemplateAction;
 use HiEvents\Http\Actions\EmailTemplates\CreateOrganizerEmailTemplateAction;
@@ -115,6 +116,12 @@ use HiEvents\Http\Actions\EventOccurrences\ReactivateOccurrenceAction;
 use HiEvents\Http\Actions\EventOccurrences\UpdateEventOccurrenceAction;
 use HiEvents\Http\Actions\EventOccurrences\UpdateProductVisibilityAction;
 use HiEvents\Http\Actions\EventOccurrences\UpsertPriceOverrideAction;
+use HiEvents\Http\Actions\Enrollment\DeleteAllEventEnrollmentsAction;
+use HiEvents\Http\Actions\Enrollment\DeleteEventEnrollmentAction;
+use HiEvents\Http\Actions\Enrollment\ExportEventEnrollmentsAction;
+use HiEvents\Http\Actions\Enrollment\GetEventEnrollmentsAction;
+use HiEvents\Http\Actions\Enrollment\ImportEventEnrollmentsAction;
+use HiEvents\Http\Actions\Enrollment\LookupEnrollmentActionPublic;
 use HiEvents\Http\Actions\Events\CreateEventAction;
 use HiEvents\Http\Actions\Events\DeleteEventAction;
 use HiEvents\Http\Actions\Events\DuplicateEventAction;
@@ -156,6 +163,8 @@ use HiEvents\Http\Actions\Orders\GetOrderAction;
 use HiEvents\Http\Actions\Orders\GetOrdersAction;
 use HiEvents\Http\Actions\Orders\MarkOrderAsPaidAction;
 use HiEvents\Http\Actions\Orders\MessageOrderAction;
+use HiEvents\Http\Actions\Orders\Payment\Razorpay\CreateRazorpayPaymentSessionActionPublic;
+use HiEvents\Http\Actions\Orders\Payment\Razorpay\VerifyRazorpayPaymentActionPublic;
 use HiEvents\Http\Actions\Orders\Payment\RefundOrderAction;
 use HiEvents\Http\Actions\Orders\Payment\Stripe\CreatePaymentIntentActionPublic;
 use HiEvents\Http\Actions\Orders\Payment\Stripe\GetPaymentIntentActionPublic;
@@ -391,6 +400,13 @@ $router->middleware(['auth:api'])->group(
         $router->get('/events/{event_id}/deletion-status', GetEventDeletionStatusAction::class);
         $router->post('/events/{event_id}/duplicate', DuplicateEventAction::class);
 
+        // Event Enrollments
+        $router->post('/events/{event_id}/enrollments/import', ImportEventEnrollmentsAction::class);
+        $router->get('/events/{event_id}/enrollments', GetEventEnrollmentsAction::class);
+        $router->get('/events/{event_id}/enrollments/export', ExportEventEnrollmentsAction::class);
+        $router->delete('/events/{event_id}/enrollments/{enrollment_id}', DeleteEventEnrollmentAction::class);
+        $router->delete('/events/{event_id}/enrollments', DeleteAllEventEnrollmentsAction::class);
+
         // Product Categories
         $router->post('/events/{event_id}/product-categories', CreateProductCategoryAction::class);
         $router->get('/events/{event_id}/product-categories', GetProductCategoriesAction::class);
@@ -600,6 +616,8 @@ $router->prefix('/public')->group(
         $router->get('/events/{event_id}', GetEventPublicAction::class);
         $router->get('/events/{event_id}/occurrences', GetEventOccurrencesPublicAction::class)
             ->middleware('throttle:60,1');
+        $router->get('/events/{event_id}/enrollments/lookup', LookupEnrollmentActionPublic::class)
+            ->middleware('throttle:30,1');
 
         // Organizers
         $router->get('/organizers/{organizer_id}', GetPublicOrganizerAction::class);
@@ -631,6 +649,10 @@ $router->prefix('/public')->group(
         $router->get('/events/{event_id}/promo-codes/{promo_code}', GetPromoCodePublic::class)
             ->middleware('throttle:10,1');
 
+        // Razorpay payment gateway
+        $router->post('/events/{event_id}/order/{order_short_id}/razorpay/order', CreateRazorpayPaymentSessionActionPublic::class);
+        $router->post('/events/{event_id}/order/{order_short_id}/razorpay/verify', VerifyRazorpayPaymentActionPublic::class);
+
         // Stripe payment gateway
         $router->post('/events/{event_id}/order/{order_short_id}/stripe/payment_intent', CreatePaymentIntentActionPublic::class);
         $router->get('/events/{event_id}/order/{order_short_id}/stripe/payment_intent', GetPaymentIntentActionPublic::class);
@@ -639,6 +661,7 @@ $router->prefix('/public')->group(
         $router->get('/events/{event_id}/questions', GetQuestionsPublicAction::class);
 
         // Webhooks
+        $router->post('/webhooks/razorpay', RazorpayIncomingWebhookAction::class);
         $router->post('/webhooks/stripe', StripeIncomingWebhookAction::class);
 
         // Check-In

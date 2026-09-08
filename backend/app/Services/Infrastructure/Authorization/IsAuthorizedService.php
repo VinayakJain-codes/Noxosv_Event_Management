@@ -35,13 +35,18 @@ readonly class IsAuthorizedService
      */
     public function validateUserRole(Role $minimumRole, UserDomainObject $authUser): void
     {
-        if ($minimumRole === Role::ADMIN
-            && in_array($authUser->getCurrentAccountUser()->getRole(), [Role::SUPERADMIN->name, Role::ADMIN->name], true) === false
-        ) {
-            throw new UnauthorizedException(__('You are not authorized to perform this action.'));
-        }
+        $roleHierarchy = [
+            Role::SUPERADMIN->name => 4,
+            Role::ADMIN->name => 3,
+            Role::ORGANIZER->name => 2,
+            Role::VIEWER->name => 1,
+        ];
 
-        if ($minimumRole === Role::SUPERADMIN && $authUser->getCurrentAccountUser()->getRole() !== Role::SUPERADMIN->name) {
+        $userRole = $authUser->getCurrentAccountUser()?->getRole();
+        $userLevel = $roleHierarchy[$userRole] ?? 0;
+        $requiredLevel = $roleHierarchy[$minimumRole->name] ?? 2;
+
+        if ($userLevel < $requiredLevel) {
             throw new UnauthorizedException(__('You are not authorized to perform this action.'));
         }
     }
@@ -55,6 +60,17 @@ readonly class IsAuthorizedService
     ): void {
         $this->validateUserStatus($authUser);
         $this->validateUserRole($minimumRole, $authUser);
+
+        if ($entityType === EventDomainObject::class && $authUser->getCurrentAccountUser()?->getRole() === Role::VIEWER->name) {
+            $isAssigned = \Illuminate\Support\Facades\DB::table('event_users')
+                ->where('event_id', $entityId)
+                ->where('user_id', $authUser->getId())
+                ->exists();
+
+            if (! $isAssigned) {
+                throw new UnauthorizedException(__('You are not assigned to this event.'));
+            }
+        }
 
         $repository = match ($entityType) {
             EventDomainObject::class => $this->app->make(EventRepositoryInterface::class),

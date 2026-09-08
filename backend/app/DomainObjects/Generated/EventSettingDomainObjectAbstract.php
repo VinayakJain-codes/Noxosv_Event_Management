@@ -70,6 +70,8 @@ abstract class EventSettingDomainObjectAbstract extends \HiEvents\DomainObjects\
     final public const SHOW_AVAILABLE_OCCURRENCE_CAPACITY = 'show_available_occurrence_capacity';
     final public const HIDE_SOLD_OUT_OCCURRENCES = 'hide_sold_out_occurrences';
     final public const GET_TICKETS_BUTTON_TEXT = 'get_tickets_button_text';
+    final public const ENROLLMENT_ENABLED = 'enrollment_enabled';
+    final public const ENROLLMENT_RESTRICT_TO_ONE_TICKET = 'enrollment_restrict_to_one_ticket';
 
     protected int $id;
     protected int $event_id;
@@ -131,6 +133,8 @@ abstract class EventSettingDomainObjectAbstract extends \HiEvents\DomainObjects\
     protected bool $show_available_occurrence_capacity = false;
     protected bool $hide_sold_out_occurrences = false;
     protected ?string $get_tickets_button_text = null;
+    protected bool $enrollment_enabled = false;
+    protected bool $enrollment_restrict_to_one_ticket = true;
 
     public function toArray(): array
     {
@@ -195,6 +199,8 @@ abstract class EventSettingDomainObjectAbstract extends \HiEvents\DomainObjects\
                     'show_available_occurrence_capacity' => $this->show_available_occurrence_capacity ?? null,
                     'hide_sold_out_occurrences' => $this->hide_sold_out_occurrences ?? null,
                     'get_tickets_button_text' => $this->get_tickets_button_text ?? null,
+                    'enrollment_enabled' => $this->enrollment_enabled ?? null,
+                    'enrollment_restrict_to_one_ticket' => $this->enrollment_restrict_to_one_ticket ?? null,
                 ];
     }
 
@@ -857,5 +863,27 @@ abstract class EventSettingDomainObjectAbstract extends \HiEvents\DomainObjects\
     public function getGetTicketsButtonText(): ?string
     {
         return $this->get_tickets_button_text;
+    }
+
+    public function setEnrollmentEnabled(bool $enrollment_enabled): self
+    {
+        $this->enrollment_enabled = $enrollment_enabled;
+        return $this;
+    }
+
+    public function getEnrollmentEnabled(): bool
+    {
+        return $this->enrollment_enabled;
+    }
+
+    public function setEnrollmentRestrictToOneTicket(bool $enrollment_restrict_to_one_ticket): self
+    {
+        $this->enrollment_restrict_to_one_ticket = $enrollment_restrict_to_one_ticket;
+        return $this;
+    }
+
+    public function getEnrollmentRestrictToOneTicket(): bool
+    {
+        return $this->enrollment_restrict_to_one_ticket;
     }
 }

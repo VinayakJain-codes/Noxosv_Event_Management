@@ -14,6 +14,8 @@ use HiEvents\Services\Application\Handlers\User\DTO\CreateUserDTO;
 use HiEvents\Services\Domain\Account\AccountUserAssociationService;
 use HiEvents\Services\Domain\User\SendUserInvitationService;
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Throwable;
 
 readonly class CreateUserHandler
@@ -44,31 +46,46 @@ readonly class CreateUserHandler
 
             $authenticatedAccount = $this->accountRepository->findById($userData->account_id);
 
-            $invitedUser = $existingUser ?? $this->createUser($userData, $authenticatedAccount);
+            $generatedPassword = null;
+            if ($existingUser === null) {
+                $generatedPassword = Str::random(12);
+                $invitedUser = $this->createUser($userData, $authenticatedAccount, $generatedPassword);
+                $invitedUser->setTemporaryPassword($generatedPassword);
+            } else {
+                $invitedUser = $existingUser;
+            }
 
             $invitedUser->setCurrentAccountUser($this->accountUserAssociationService->associate(
                 user: $invitedUser,
                 account: $authenticatedAccount,
                 role: $userData->role,
-                status: UserStatus::INVITED,
+                status: UserStatus::ACTIVE,
                 invitedByUserId: $userData->invited_by,
             ));
 
-            $this->sendUserInvitationService->sendInvitation($invitedUser, $authenticatedAccount->getId());
+            if ($userData->event_ids !== null) {
+                $this->userRepository->syncAssignedEvents($invitedUser->getId(), $userData->event_ids);
+                $invitedUser->setAssignedEventIds($userData->event_ids);
+            }
+
+            try {
+                $this->sendUserInvitationService->sendInvitation($invitedUser, $authenticatedAccount->getId());
+            } catch (Throwable) {
+            }
 
             return $invitedUser;
         });
 
     }
 
-    private function createUser(CreateUserDTO $userData, AccountDomainObject $authenticatedAccount): UserDomainObject
+    private function createUser(CreateUserDTO $userData, AccountDomainObject $authenticatedAccount, string $password): UserDomainObject
     {
         return $this->userRepository
             ->create([
                 'first_name' => $userData->first_name,
                 'last_name' => $userData->last_name,
                 'email' => strtolower($userData->email),
-                'password' => 'invited', // initially, a user is in an invited state, so they don't have a password
+                'password' => Hash::make($password),
                 'timezone' => $authenticatedAccount->getTimezone(),
             ]);
     }

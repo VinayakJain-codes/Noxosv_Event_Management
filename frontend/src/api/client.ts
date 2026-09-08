@@ -35,8 +35,27 @@ export const api = axios.create({
     withCredentials: true,
 });
 
+api.interceptors.request.use(
+    (config) => {
+        if (typeof window !== 'undefined') {
+            const token = window.localStorage?.getItem('token');
+            if (token && !config.headers['Authorization']) {
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        const authToken = response.headers?.['x-auth-token'] || (response.data as any)?.token;
+        if (authToken && typeof window !== 'undefined') {
+            window.localStorage?.setItem('token', authToken);
+        }
+        return response;
+    },
     (error) => {
         if (!error.response) {
             return Promise.reject(error);
@@ -46,6 +65,10 @@ api.interceptors.response.use(
         const isAllowedUnauthenticatedPath = ALLOWED_UNAUTHENTICATED_PATHS.some(path => currentPath.includes(path));
         const isManageEventPath = currentPath.startsWith('/manage/event/');
         const isAuthError = status === 401 || status === 403;
+
+        if (status === 401 && typeof window !== 'undefined') {
+            window.localStorage?.removeItem('token');
+        }
 
         if (status === 403 && error.response.data?.error_code === 'ACCOUNT_PENDING_DELETION') {
             if (!currentPath.startsWith('/account')) {

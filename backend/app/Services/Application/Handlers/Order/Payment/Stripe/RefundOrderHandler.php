@@ -5,7 +5,8 @@ namespace HiEvents\Services\Application\Handlers\Order\Payment\Stripe;
 use Brick\Math\Exception\MathException;
 use Brick\Math\Exception\NumberFormatException;
 use Brick\Math\Exception\RoundingNecessaryException;
-use Brick\Money\Exception\UnknownCurrencyException;
+use HiEvents\DomainObjects\RazorpayPaymentDomainObject;
+use HiEvents\DomainObjects\Enums\PaymentProviders;
 use HiEvents\DomainObjects\EventDomainObject;
 use HiEvents\DomainObjects\EventSettingDomainObject;
 use HiEvents\DomainObjects\Generated\OrderDomainObjectAbstract;
@@ -20,6 +21,7 @@ use HiEvents\Repository\Interfaces\EventRepositoryInterface;
 use HiEvents\Repository\Interfaces\OrderRepositoryInterface;
 use HiEvents\Services\Application\Handlers\Order\DTO\RefundOrderDTO;
 use HiEvents\Services\Domain\Order\OrderCancelService;
+use HiEvents\Services\Domain\Payment\Razorpay\RazorpayPaymentRefundService;
 use HiEvents\Services\Domain\Payment\Stripe\StripePaymentIntentRefundService;
 use HiEvents\Services\Infrastructure\Stripe\StripeClientFactory;
 use HiEvents\Values\MoneyValue;
@@ -33,6 +35,7 @@ class RefundOrderHandler
 {
     public function __construct(
         private readonly StripePaymentIntentRefundService $refundService,
+        private readonly RazorpayPaymentRefundService $razorpayRefundService,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly EventRepositoryInterface $eventRepository,
         private readonly Mailer $mailer,
@@ -55,6 +58,7 @@ class RefundOrderHandler
     {
         $order = $this->orderRepository
             ->loadRelation(new Relationship(StripePaymentDomainObject::class, name: 'stripe_payment'))
+            ->loadRelation(new Relationship(RazorpayPaymentDomainObject::class, name: 'razorpay_payment'))
             ->findFirstWhere(['event_id' => $eventId, 'id' => $orderId]);
 
         if (! $order) {
@@ -72,8 +76,12 @@ class RefundOrderHandler
      */
     private function validateRefundability(OrderDomainObject $order): void
     {
-        if (! $order->getStripePayment()) {
-            throw new RefundNotPossibleException(__('There is no Stripe data associated with this order.'));
+        if ($order->getPaymentProvider() === PaymentProviders::RAZORPAY->value) {
+            if (! $order->getRazorpayPayment()) {
+                throw new RefundNotPossibleException(__('There is no Razorpay payment data associated with this order.'));
+            }
+        } elseif (! $order->getStripePayment()) {
+            throw new RefundNotPossibleException(__('There is no payment data associated with this order.'));
         }
 
         if ($order->getRefundStatus() === OrderRefundStatus::REFUND_PENDING->name) {
@@ -110,7 +118,6 @@ class RefundOrderHandler
 
     /**
      * @throws ApiErrorException
-     * @throws UnknownCurrencyException
      * @throws RefundNotPossibleException
      * @throws Throwable
      * @throws RoundingNecessaryException
@@ -133,18 +140,21 @@ class RefundOrderHandler
             $this->orderCancelService->cancelOrder($order);
         }
 
-        // Determine the correct Stripe platform for this refund
-        // Use the platform that was used for the original payment
-        $paymentPlatform = $order->getStripePayment()->getStripePlatformEnum();
+        if ($order->getPaymentProvider() === PaymentProviders::RAZORPAY->value && $order->getRazorpayPayment()) {
+            $this->razorpayRefundService->refundPayment(
+                amount: $amount,
+                payment: $order->getRazorpayPayment(),
+            );
+        } elseif ($order->getStripePayment()) {
+            $paymentPlatform = $order->getStripePayment()->getStripePlatformEnum();
+            $stripeClient = $this->stripeClientFactory->createForPlatform($paymentPlatform);
 
-        // Create Stripe client for the original payment's platform
-        $stripeClient = $this->stripeClientFactory->createForPlatform($paymentPlatform);
-
-        $this->refundService->refundPayment(
-            amount: $amount,
-            payment: $order->getStripePayment(),
-            stripeClient: $stripeClient
-        );
+            $this->refundService->refundPayment(
+                amount: $amount,
+                payment: $order->getStripePayment(),
+                stripeClient: $stripeClient
+            );
+        }
 
         if ($refundOrderDTO->notify_buyer) {
             $this->notifyBuyer($order, $event, $amount);

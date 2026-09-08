@@ -16,9 +16,12 @@ import {useGetEvent} from "../../../../queries/useGetEvent.ts";
 import {CheckInListTable} from "../../../common/CheckInListTable";
 import {CreateCheckInListModal} from "../../../modals/CreateCheckInListModal";
 import {SortSelector} from "../../../common/SortSelector";
+import {useGetMe} from "../../../../queries/useGetMe.ts";
 
 const CheckInLists = () => {
     const {eventId} = useParams();
+    const {data: me} = useGetMe();
+    const isViewer = me?.role === 'VIEWER';
     const {data: event} = useGetEvent(eventId);
     const [searchParams, setSearchParams] = useFilterQueryParamSync();
     const checkInListsQuery = useGetEventCheckInLists(
@@ -59,13 +62,15 @@ const CheckInLists = () => {
                 resultCount={pagination?.total}
                 resultLabel={t`check-in lists`}
             >
-                <Button
-                    leftSection={<IconPlus/>}
-                    color={'green'}
-                    size={'sm'}
-                    data-testid="checkin-list-create-button"
-                    onClick={openCreateModal}>{t`Create Check-In List`}
-                </Button>
+                {!isViewer && (
+                    <Button
+                        leftSection={<IconPlus/>}
+                        color={'green'}
+                        size={'sm'}
+                        data-testid="checkin-list-create-button"
+                        onClick={openCreateModal}>{t`Create Check-In List`}
+                    </Button>
+                )}
             </ToolBar>
 
             <TableSkeleton isVisible={!checkInLists || checkInListsQuery.isFetching}/>

@@ -1,5 +1,6 @@
 import {useMutation} from "@tanstack/react-query";
 import {FinaliseOrderPayload, orderClientPublic} from "../../../../api/order.client.ts";
+import {enrollmentClient} from "../../../../api/enrollment.client.ts";
 import {useNavigate, useParams, useSearchParams} from "react-router";
 import {
     Button,
@@ -9,7 +10,8 @@ import {
     Skeleton,
     Text,
     TextInput,
-    Tooltip
+    Tooltip,
+    ActionIcon,
 } from "@mantine/core";
 import {IconArrowRight, IconCheck, IconCircleCheck, IconClock} from "@tabler/icons-react";
 import {t, Trans} from "@lingui/macro";
@@ -81,7 +83,11 @@ export const CollectInformation = () => {
     const requireBillingAddress = event?.settings?.require_billing_address;
     const isPerOrderCollection = event?.settings?.attendee_details_collection_method === 'PER_ORDER';
     const allowCopyToAllAttendees = event?.settings?.allow_copy_details_to_all_attendees ?? true;
+    const isEnrollmentEnabled = event?.settings?.enrollment_enabled;
     const [copyOption, setCopyOption] = useState<'none' | 'first' | 'all'>('none');
+    const [enrollmentInput, setEnrollmentInput] = useState('');
+    const [isVerifyingEnrollment, setIsVerifyingEnrollment] = useState(false);
+    const [enrollmentVerified, setEnrollmentVerified] = useState(false);
 
     const isEmailValid = (email: string) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -101,6 +107,7 @@ export const CollectInformation = () => {
                 last_name: "",
                 email: "",
                 email_confirmation: "",
+                enrollment_no: "",
                 address: {},
                 questions: {},
                 opted_into_marketing: false,
@@ -119,6 +126,8 @@ export const CollectInformation = () => {
             order: {
                 email_confirmation: (value, values) =>
                     value !== values.order.email ? t`Email addresses do not match` : null,
+                enrollment_no: () => 
+                    (isEnrollmentEnabled && !enrollmentVerified) ? 'You must verify your enrollment number first' : null,
             },
             products: {
                 email_confirmation: (value, values, path) => {
@@ -464,6 +473,69 @@ export const CollectInformation = () => {
                     {t`We'll send your tickets to this email`}
                 </p>
 
+                {isEnrollmentEnabled && (
+                    <Card style={{marginBottom: '1rem'}}>
+                        <InputGroup>
+                            <TextInput
+                                withAsterisk
+                                label={t`Enrollment Number`}
+                                placeholder="Enter your enrollment number"
+                                value={enrollmentInput}
+                                onChange={(e) => {
+                                    setEnrollmentInput(e.currentTarget.value);
+                                    setEnrollmentVerified(false);
+                                    form.setFieldValue('order.enrollment_no', '');
+                                }}
+                                disabled={enrollmentVerified}
+                                rightSection={
+                                    enrollmentVerified ? (
+                                        <IconCircleCheck size={18} style={{color: 'var(--primary-color, #10B981)'}}/>
+                                    ) : (
+                                        <ActionIcon 
+                                            variant="light" 
+                                            onClick={async () => {
+                                                if (!enrollmentInput) return;
+                                                setIsVerifyingEnrollment(true);
+                                                try {
+                                                    const res = await enrollmentClient.lookup(eventId!, enrollmentInput.trim());
+                                                    const data = (res as any)?.data ?? res;
+                                                    
+                                                    setEnrollmentVerified(true);
+                                                    form.clearFieldError('order.enrollment_no');
+                                                    form.setFieldValue('order.enrollment_no', data.enrollment_no);
+                                                    
+                                                    // Auto-fill details
+                                                    if (data.first_name) {
+                                                        form.setFieldValue('order.first_name', data.first_name);
+                                                    }
+                                                    if (data.last_name) {
+                                                        form.setFieldValue('order.last_name', data.last_name);
+                                                    }
+                                                    if (data.email) {
+                                                        form.setFieldValue('order.email', data.email);
+                                                        form.setFieldValue('order.email_confirmation', data.email);
+                                                    }
+                                                    
+                                                } catch (e: any) {
+                                                    setEnrollmentVerified(false);
+                                                    const msg = e?.response?.data?.message || 'Invalid enrollment number';
+                                                    form.setFieldError('order.enrollment_no', msg);
+                                                } finally {
+                                                    setIsVerifyingEnrollment(false);
+                                                }
+                                            }}
+                                            loading={isVerifyingEnrollment}
+                                        >
+                                            <IconCheck size={16}/>
+                                        </ActionIcon>
+                                    )
+                                }
+                                {...(form.errors['order.enrollment_no'] ? {error: form.errors['order.enrollment_no']} : {})}
+                            />
+                        </InputGroup>
+                    </Card>
+                )}
+
                 <Card>
                     <InputGroup>
                         <TextInput
@@ -765,7 +837,7 @@ export const CollectInformation = () => {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    {getConfig('VITE_APP_NAME', 'Hi.Events')} Terms of Service
+                                    {getConfig('VITE_APP_NAME', 'Manav Samaj Setu Foundation Events')} Terms of Service
                                 </a>
                             </Trans>
                         </p>

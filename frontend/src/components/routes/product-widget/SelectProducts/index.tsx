@@ -51,7 +51,7 @@ import {formatCurrency} from "../../../../utilites/currency.ts";
 import {getDisplayPrice} from "../../../common/Currency";
 import {eventsClientPublic} from "../../../../api/event.client.ts";
 import {promoCodeClientPublic} from "../../../../api/promo-code.client.ts";
-import {IconCheck, IconChevronDown, IconX} from "@tabler/icons-react"
+import {IconCheck, IconChevronDown, IconInfoCircle, IconX} from "@tabler/icons-react"
 import {getSessionIdentifier} from "../../../../utilites/sessionIdentifier.ts";
 import {setCheckoutSessionIdentifier} from "../../../../utilites/checkoutSession.ts";
 import {getEmbedParentUrl, getParentOrigin, sendHeightToParent} from "../../../../utilites/iframeResize.ts";
@@ -595,6 +595,10 @@ const SelectProducts = (props: SelectProductsProps) => {
                 return;
             }
         }
+        if (event?.settings?.enrollment_enabled && event?.settings?.enrollment_restrict_to_one_ticket && selectedProductQuantitySum > 1) {
+            showError('Only 1 ticket is allowed per order when enrollment restriction is enabled.');
+            return;
+        }
         if (values && selectedProductQuantitySum > 0) {
             const productsWithOccurrence = values.products?.map(product => ({
                 ...product,
@@ -643,6 +647,24 @@ const SelectProducts = (props: SelectProductsProps) => {
 
     const productFormSection = (
         <>
+            {event?.settings?.enrollment_enabled && event?.settings?.enrollment_restrict_to_one_ticket && (
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    color: 'var(--text-color, #1e293b)',
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                }}>
+                    <IconInfoCircle size={20} style={{color: '#2563EB', flexShrink: 0}} />
+                    <span>Enrollment verification is required for this event (maximum 1 ticket per student).</span>
+                </div>
+            )}
             <div className={'hi-product-category-rows'}>
                 {productCategories && productCategories.map((category) => {
                     const visibleProducts = (category.products || []).filter(product => !product.is_addon_only);
@@ -1115,7 +1137,7 @@ const SelectProducts = (props: SelectProductsProps) => {
                  *
                  * You can find the full license text at: https://github.com/HiEventsDev/hi.events/blob/main/LICENCE
                  *
-                 * In accordance with Section 7(b) of the AGPL, we ask that you retain the "Powered by Hi.Events" notice.
+                 * In accordance with Section 7(b) of the AGPL, we ask that you retain the "Powered by Manav Samaj Setu Foundation Events" notice.
                  *
                  * If you wish to remove this notice, a commercial license is available at: https://hi.events/licensing
                  */

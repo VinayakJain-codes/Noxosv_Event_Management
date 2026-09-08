@@ -69,6 +69,12 @@ class CompleteOrderValidator extends BaseValidator
             'order.address.country' => 'required|string|max:2',
         ] : [];
 
+        $enrollmentRules = $eventSettings->getEnrollmentEnabled() ? [
+            'order.enrollment_no' => ['required', 'string', 'max:255'],
+        ] : [
+            'order.enrollment_no' => ['nullable', 'string', 'max:255'],
+        ];
+
         return [
             'order.first_name' => ['required', 'string', 'max:40'],
             'order.last_name' => ['required', 'string', 'max:40'],
@@ -81,6 +87,7 @@ class CompleteOrderValidator extends BaseValidator
                 $eventSettings->getAttendeeDetailsCollectionMethod(),
             ),
             ...$addressRules,
+            ...$enrollmentRules,
         ];
     }
 
@@ -98,6 +105,7 @@ class CompleteOrderValidator extends BaseValidator
             'order.address.city.required' => __('City is required'),
             'order.address.zip_or_postal_code.required' => __('Zip or postal code is required'),
             'order.address.country.required' => __('Country is required'),
+            'order.enrollment_no.required' => __('Enrollment number is required'),
         ];
     }
 }

@@ -433,6 +433,13 @@ export const router: RouteObject[] = [
                 }
             },
             {
+                path: "enrollments",
+                async lazy() {
+                    const Enrollments = await import("./components/routes/event/enrollments");
+                    return { Component: Enrollments.default };
+                }
+            },
+            {
                 path: "affiliates",
                 async lazy() {
                     const Affiliates = await import("./components/routes/event/Affiliates");

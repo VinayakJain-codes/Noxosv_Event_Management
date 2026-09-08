@@ -10,6 +10,10 @@ class UserDomainObject extends Generated\UserDomainObjectAbstract
 
     public ?AccountUserDomainObject $currentAccountUser = null;
 
+    public ?string $temporaryPassword = null;
+
+    public ?array $assignedEventIds = null;
+
     public function getFullName(): string
     {
         return $this->getFirstName().' '.$this->getLastName();
@@ -48,6 +52,30 @@ class UserDomainObject extends Generated\UserDomainObjectAbstract
     public function setCurrentAccountUser(?AccountUserDomainObject $currentAccountUser): static
     {
         $this->currentAccountUser = $currentAccountUser;
+
+        return $this;
+    }
+
+    public function getTemporaryPassword(): ?string
+    {
+        return $this->temporaryPassword;
+    }
+
+    public function setTemporaryPassword(?string $temporaryPassword): static
+    {
+        $this->temporaryPassword = $temporaryPassword;
+
+        return $this;
+    }
+
+    public function getAssignedEventIds(): ?array
+    {
+        return $this->assignedEventIds;
+    }
+
+    public function setAssignedEventIds(?array $assignedEventIds): static
+    {
+        $this->assignedEventIds = $assignedEventIds;
 
         return $this;
     }

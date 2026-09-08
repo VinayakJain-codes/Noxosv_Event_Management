@@ -42,12 +42,22 @@ class CheckoutSessionManagementService
 
     public function getSessionCookie(): SymfonyCookie
     {
+        $isSecure = $this->request->isSecure()
+            || $this->request->header('X-Forwarded-Proto') === 'https'
+            || str_starts_with($this->config->get('app.url', ''), 'https://');
+
+        $host = $this->request->getHost();
+        $domain = $this->config->get('session.domain');
+        if (! $domain && $host !== 'localhost' && ! filter_var($host, FILTER_VALIDATE_IP)) {
+            $domain = '.' . $host;
+        }
+
         return Cookie::make(
             name: self::SESSION_IDENTIFIER,
             value: $this->getSessionId(),
-            domain: $this->config->get('session.domain') ?? '.'.$this->request->getHost(),
-            secure: true,
-            sameSite: 'None',
+            domain: $domain,
+            secure: $isSecure,
+            sameSite: $isSecure ? 'None' : 'Lax',
         )->withPartitioned(true);
     }
 

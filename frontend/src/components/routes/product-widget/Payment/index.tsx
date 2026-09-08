@@ -3,7 +3,7 @@ import {useNavigate, useParams} from "react-router";
 import {useGetEventPublic} from "../../../../queries/useGetEventPublic.ts";
 import {CheckoutContent} from "../../../layouts/Checkout/CheckoutContent";
 import {CheckoutStepTitle} from "../../../layouts/Checkout/CheckoutStepTitle";
-import {StripePaymentMethod} from "./PaymentMethods/Stripe";
+import {RazorpayPaymentMethod} from "./PaymentMethods/Razorpay";
 import {OfflinePaymentMethod} from "./PaymentMethods/Offline";
 import {Event} from "../../../../types.ts";
 import {Button, Group, Text} from "@mantine/core";
@@ -29,26 +29,24 @@ const Payment = () => {
     const isLoading = !isOrderFetched;
     const checkoutEvent = order?.event || event;
     const [isPaymentLoading, setIsPaymentLoading] = useState(false);
-    const [activePaymentMethod, setActivePaymentMethod] = useState<'STRIPE' | 'OFFLINE' | null>(null);
+    const [activePaymentMethod, setActivePaymentMethod] = useState<'RAZORPAY' | 'OFFLINE' | null>(null);
     const [submitHandler, setSubmitHandler] = useState<(() => Promise<void>) | null>(null);
     const transitionOrderToOfflinePaymentMutation = useTransitionOrderToOfflinePaymentPublic();
 
-    const isStripeEnabled = event?.settings?.payment_providers?.includes('STRIPE');
+    const isRazorpayEnabled = event?.settings?.payment_providers?.includes('RAZORPAY') || (event?.settings?.payment_providers as any)?.includes('STRIPE') || (event?.settings?.payment_providers as any)?.includes('CASHFREE');
     const isOfflineEnabled = event?.settings?.payment_providers?.includes('OFFLINE');
 
     React.useEffect(() => {
-        // Automatically set the first available payment method
-        if (isStripeEnabled) {
-            setActivePaymentMethod('STRIPE');
+        if (isRazorpayEnabled) {
+            setActivePaymentMethod('RAZORPAY');
         } else if (isOfflineEnabled) {
             setActivePaymentMethod('OFFLINE');
         } else {
-            setActivePaymentMethod(null); // No methods available
+            setActivePaymentMethod(null);
         }
-    }, [isStripeEnabled, isOfflineEnabled]);
+    }, [isRazorpayEnabled, isOfflineEnabled]);
 
     React.useEffect(() => {
-        // Scroll to top when payment page loads
         window?.scrollTo(0, 0);
     }, []);
 
@@ -60,7 +58,7 @@ const Payment = () => {
     };
 
     const handleSubmit = async () => {
-        if (activePaymentMethod === 'STRIPE') {
+        if (activePaymentMethod === 'RAZORPAY') {
             handleParentSubmit();
         } else if (activePaymentMethod === 'OFFLINE') {
             setIsPaymentLoading(true);
@@ -82,7 +80,7 @@ const Payment = () => {
         }
     };
 
-    if (!isStripeEnabled && !isOfflineEnabled && isOrderFetched && isEventFetched) {
+    if (!isRazorpayEnabled && !isOfflineEnabled && isOrderFetched && isEventFetched) {
         return (
             <CheckoutContent>
                 <Card>
@@ -100,9 +98,9 @@ const Payment = () => {
                 {(checkoutEvent && order) && (
                     <InlineOrderSummary event={checkoutEvent} order={order} defaultExpanded={false}/>
                 )}
-                {isStripeEnabled && (
-                    <div style={{display: activePaymentMethod === 'STRIPE' ? 'block' : 'none'}}>
-                        <StripePaymentMethod enabled={true} setSubmitHandler={setSubmitHandler}/>
+                {isRazorpayEnabled && (
+                    <div style={{display: activePaymentMethod === 'RAZORPAY' ? 'block' : 'none'}}>
+                        <RazorpayPaymentMethod enabled={true} setSubmitHandler={setSubmitHandler}/>
                     </div>
                 )}
 
@@ -112,7 +110,7 @@ const Payment = () => {
                     </div>
                 )}
 
-                {(isStripeEnabled && isOfflineEnabled) && (
+                {(isRazorpayEnabled && isOfflineEnabled) && (
                     <div className={classes.paymentMethodSelector}>
                         <Text size="sm" c="dimmed" className={classes.paymentMethodLabel}>
                             {t`Payment method`}
@@ -120,8 +118,8 @@ const Payment = () => {
                         <div className={classes.paymentMethodTabs}>
                             <button
                                 type="button"
-                                className={`${classes.paymentMethodTab} ${activePaymentMethod === 'STRIPE' ? classes.active : ''}`}
-                                onClick={() => setActivePaymentMethod('STRIPE')}
+                                className={`${classes.paymentMethodTab} ${activePaymentMethod === 'RAZORPAY' ? classes.active : ''}`}
+                                onClick={() => setActivePaymentMethod('RAZORPAY')}
                             >
                                 <IconWallet size={18}/>
                                 <span>{t`Online`}</span>
@@ -161,7 +159,7 @@ const Payment = () => {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                 >
-                                    {getConfig('VITE_APP_NAME', 'Hi.Events')} Terms of Service
+                                    {getConfig('VITE_APP_NAME', 'Manav Samaj Setu Foundation Events')} Terms of Service
                                 </a>
                             </Trans>
                         </p>

@@ -3,6 +3,7 @@
 namespace HiEvents\Http\Actions\Orders;
 
 use HiEvents\DomainObjects\AttendeeDomainObject;
+use HiEvents\DomainObjects\Enums\Role;
 use HiEvents\DomainObjects\EventDomainObject;
 use HiEvents\DomainObjects\EventOccurrenceDomainObject;
 use HiEvents\DomainObjects\InvoiceDomainObject;
@@ -26,7 +27,7 @@ class GetOrdersAction extends BaseAction
 
     public function __invoke(Request $request, int $eventId): JsonResponse
     {
-        $this->isActionAuthorized($eventId, EventDomainObject::class);
+        $this->isActionAuthorized($eventId, EventDomainObject::class, Role::VIEWER);
 
         $orders = $this->orderRepository
             ->loadRelation(new Relationship(

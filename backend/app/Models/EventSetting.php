@@ -14,6 +14,8 @@ class EventSetting extends BaseModel
             'payment_providers' => 'array',
             'ticket_design_settings' => 'array',
             'homepage_theme_settings' => 'array',
+            'enrollment_enabled' => 'boolean',
+            'enrollment_restrict_to_one_ticket' => 'boolean',
         ];
     }
 }

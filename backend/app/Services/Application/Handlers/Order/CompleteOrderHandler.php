@@ -27,6 +27,7 @@ use HiEvents\Helper\IdHelper;
 use HiEvents\Repository\Eloquent\Value\Relationship;
 use HiEvents\Repository\Interfaces\AffiliateRepositoryInterface;
 use HiEvents\Repository\Interfaces\AttendeeRepositoryInterface;
+use HiEvents\Repository\Interfaces\EventEnrollmentRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventSettingsRepositoryInterface;
 use HiEvents\Repository\Interfaces\OrderRepositoryInterface;
 use HiEvents\Repository\Interfaces\ProductPriceRepositoryInterface;
@@ -64,6 +65,7 @@ class CompleteOrderHandler
         private readonly EventSettingsRepositoryInterface $eventSettingsRepository,
         private readonly CheckoutSessionManagementService $sessionManagementService,
         private readonly OccurrenceStatusValidator $occurrenceStatusValidator,
+        private readonly EventEnrollmentRepositoryInterface $enrollmentRepository,
     ) {}
 
     /**
@@ -91,6 +93,56 @@ class CompleteOrderHandler
 
             if ($orderData->order->questions) {
                 $this->createOrderQuestions($orderDTO->questions, $order);
+            }
+
+            if ($eventSettings->getEnrollmentEnabled()) {
+                if (empty($orderDTO->enrollment_no)) {
+                    throw new ResourceConflictException(__('Enrollment number is required.'));
+                }
+
+                $enrollment = $this->enrollmentRepository->findFirstWhere([
+                    'event_id' => $orderData->event_id,
+                    'enrollment_no' => $orderDTO->enrollment_no,
+                ]);
+
+                if (! $enrollment) {
+                    throw new ResourceConflictException(__('Enrollment number not found.'));
+                }
+
+                if ($eventSettings->getEnrollmentRestrictToOneTicket()) {
+                    if ($enrollment->getIsUsed()) {
+                        $usedByOrderId = $enrollment->getUsedByOrderId();
+                        $isReallyUsed = true;
+                        if ($usedByOrderId && $usedByOrderId !== $order->getId()) {
+                            $previousOrder = $this->orderRepository->findById($usedByOrderId);
+                            if ($previousOrder && in_array($previousOrder->getStatus(), [OrderStatus::CANCELLED->name, OrderStatus::ABANDONED->name], true)) {
+                                $isReallyUsed = false;
+                            }
+                        }
+
+                        if ($isReallyUsed && $usedByOrderId !== $order->getId()) {
+                            throw new ResourceConflictException(__('This enrollment number has already been used to purchase a ticket.'));
+                        }
+                    }
+
+                    $ticketCount = $order->getOrderItems()
+                        ?->filter(fn (OrderItemDomainObject $orderItem) => $orderItem->getProductType() === ProductType::TICKET->name)
+                        ?->sum(fn (OrderItemDomainObject $orderItem) => $orderItem->getQuantity()) ?? 0;
+
+                    if ($ticketCount > 1) {
+                        throw new ResourceConflictException(__('Only one ticket is allowed per enrollment number.'));
+                    }
+                }
+
+                $this->enrollmentRepository->updateWhere(
+                    attributes: [
+                        'is_used' => true,
+                        'used_by_order_id' => $order->getId(),
+                    ],
+                    where: [
+                        'id' => $enrollment->getId(),
+                    ],
+                );
             }
 
             /**

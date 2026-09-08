@@ -101,4 +101,10 @@ class User extends BaseModel implements AuthenticatableContract, AuthorizableCon
     {
         return $this->currentAccountUser->role !== Role::SUPERADMIN->name;
     }
+
+    public function assignedEvents(): BelongsToMany
+    {
+        return $this->belongsToMany(Event::class, 'event_users')
+            ->withTimestamps();
+    }
 }

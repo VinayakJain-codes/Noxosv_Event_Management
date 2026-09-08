@@ -2,6 +2,7 @@
 
 namespace HiEvents\Http\Actions\Attendees;
 
+use HiEvents\DomainObjects\Enums\Role;
 use HiEvents\DomainObjects\EventDomainObject;
 use HiEvents\Exceptions\CannotCheckInException;
 use HiEvents\Http\Actions\BaseAction;
@@ -20,7 +21,7 @@ class CheckInAttendeeAction extends BaseAction
 
     public function __invoke(CheckInAttendeeRequest $request, int $eventId, string $attendeePublicId): JsonResponse
     {
-        $this->isActionAuthorized($eventId, EventDomainObject::class);
+        $this->isActionAuthorized($eventId, EventDomainObject::class, Role::VIEWER);
 
         $user = $this->getAuthenticatedUser();
 

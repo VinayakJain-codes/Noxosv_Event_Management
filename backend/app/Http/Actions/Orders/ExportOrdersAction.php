@@ -15,6 +15,7 @@ use HiEvents\Repository\Eloquent\Value\Relationship;
 use HiEvents\Repository\Interfaces\OrderRepositoryInterface;
 use HiEvents\Repository\Interfaces\QuestionRepositoryInterface;
 use Illuminate\Http\Request;
+use HiEvents\DomainObjects\Enums\Role;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -28,7 +29,7 @@ class ExportOrdersAction extends BaseAction
 
     public function __invoke(Request $request, int $eventId): BinaryFileResponse
     {
-        $this->isActionAuthorized($eventId, EventDomainObject::class);
+        $this->isActionAuthorized($eventId, EventDomainObject::class, minimumRole: Role::VIEWER);
 
         $eventOccurrenceId = $request->input('event_occurrence_id') ? (int) $request->input('event_occurrence_id') : null;
 

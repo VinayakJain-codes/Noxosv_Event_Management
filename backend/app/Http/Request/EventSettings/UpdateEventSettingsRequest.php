@@ -103,6 +103,10 @@ class UpdateEventSettingsRequest extends BaseRequest
             // Waitlist settings
             'waitlist_auto_process' => ['boolean'],
             'waitlist_offer_timeout_minutes' => ['nullable', 'integer', 'min:1', 'max:10080'],
+
+            // Enrollment settings
+            'enrollment_enabled' => ['boolean'],
+            'enrollment_restrict_to_one_ticket' => ['boolean'],
         ];
     }
 

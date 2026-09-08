@@ -3,6 +3,7 @@
 namespace HiEvents\Http\Actions\Orders;
 
 use Dedoc\Scramble\Attributes\Response as ResponseAttribute;
+use HiEvents\DomainObjects\Enums\Role;
 use HiEvents\DomainObjects\EventDomainObject;
 use HiEvents\Http\Actions\BaseAction;
 use HiEvents\Services\Application\Handlers\Order\DTO\GetOrderInvoiceDTO;
@@ -19,7 +20,7 @@ class DownloadOrderInvoiceAction extends BaseAction
     #[ResponseAttribute(status: 200, description: 'Invoice PDF', mediaType: 'application/pdf', type: 'string', format: 'binary')]
     public function __invoke(Request $request, int $eventId, int $orderId): Response
     {
-        $this->isActionAuthorized($eventId, EventDomainObject::class);
+        $this->isActionAuthorized($eventId, EventDomainObject::class, minimumRole: Role::VIEWER);
 
         $invoice = $this->orderInvoiceHandler->handle(new GetOrderInvoiceDTO(
             orderId: $orderId,

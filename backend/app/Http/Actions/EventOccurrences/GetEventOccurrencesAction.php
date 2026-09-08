@@ -2,6 +2,7 @@
 
 namespace HiEvents\Http\Actions\EventOccurrences;
 
+use HiEvents\DomainObjects\Enums\Role;
 use HiEvents\DomainObjects\EventDomainObject;
 use HiEvents\DomainObjects\EventOccurrenceDomainObject;
 use HiEvents\Http\Actions\BaseAction;
@@ -19,7 +20,7 @@ class GetEventOccurrencesAction extends BaseAction
 
     public function __invoke(int $eventId, Request $request): JsonResponse
     {
-        $this->isActionAuthorized($eventId, EventDomainObject::class);
+        $this->isActionAuthorized($eventId, EventDomainObject::class, minimumRole: Role::VIEWER);
 
         $includeStats = $request->boolean('include_stats', true);
 

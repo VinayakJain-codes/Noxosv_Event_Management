@@ -12,6 +12,7 @@ use HiEvents\Repository\Interfaces\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 /**
@@ -47,6 +48,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         }
 
         $user->setCurrentAccountUser($accountUser);
+        $user->setAssignedEventIds($this->getAssignedEventIds($userId));
 
         return $user;
     }
@@ -58,6 +60,18 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         })->get();
 
         $users = $this->handleResults($users);
+
+        if ($users->isNotEmpty()) {
+            $assignedEventsMap = DB::table('event_users')
+                ->whereIn('user_id', $users->map(fn (UserDomainObject $u) => $u->getId()))
+                ->get()
+                ->groupBy('user_id')
+                ->map(fn ($group) => $group->pluck('event_id')->toArray());
+
+            $users->each(function (UserDomainObject $userDomain) use ($assignedEventsMap) {
+                $userDomain->setAssignedEventIds($assignedEventsMap->get($userDomain->getId(), []));
+            });
+        }
 
         return $users->sortByDesc(fn (UserDomainObject $user) => $user->getUpdatedAt());
     }
@@ -81,5 +95,23 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         }
 
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
+    }
+
+    public function syncAssignedEvents(int $userId, array $eventIds): void
+    {
+        $this->runQuery(function () use ($userId, $eventIds) {
+            /** @var User $user */
+            $user = $this->model->findOrFail($userId);
+            $user->assignedEvents()->sync($eventIds);
+        });
+    }
+
+    public function getAssignedEventIds(int $userId): array
+    {
+        return $this->runQuery(function () use ($userId) {
+            /** @var User $user */
+            $user = $this->model->findOrFail($userId);
+            return $user->assignedEvents()->pluck('events.id')->toArray();
+        });
     }
 }

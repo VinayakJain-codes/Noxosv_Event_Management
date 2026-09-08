@@ -4,6 +4,7 @@ namespace HiEvents\Http\Actions\Attendees;
 
 use HiEvents\DomainObjects\AttendeeCheckInDomainObject;
 use HiEvents\DomainObjects\CheckInListDomainObject;
+use HiEvents\DomainObjects\Enums\Role;
 use HiEvents\DomainObjects\EventDomainObject;
 use HiEvents\DomainObjects\EventLocationDomainObject;
 use HiEvents\DomainObjects\EventOccurrenceDomainObject;
@@ -29,7 +30,7 @@ class GetAttendeeAction extends BaseAction
 
     public function __invoke(int $eventId, int $attendeeId): Response|JsonResponse
     {
-        $this->isActionAuthorized($eventId, EventDomainObject::class);
+        $this->isActionAuthorized($eventId, EventDomainObject::class, Role::VIEWER);
 
         $attendee = $this->attendeeRepository
             ->loadRelation(relationship: QuestionAndAnswerViewDomainObject::class)

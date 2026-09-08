@@ -138,6 +138,30 @@ export const orderClientPublic = {
         return response.data;
     },
 
+    createRazorpayOrder: async (eventId: number | string, orderShortId: string) => {
+        const response = await publicApi.post<{
+            razorpay_order_id: string;
+            order_id: string;
+            key_id: string;
+            amount: number;
+            currency: string;
+            order_short_id: string;
+        }>(`events/${eventId}/order/${orderShortId}/razorpay/order`);
+        return response.data;
+    },
+
+    verifyRazorpayPayment: async (eventId: number | string, orderShortId: string, data: {
+        razorpay_order_id: string;
+        razorpay_payment_id: string;
+        razorpay_signature: string;
+    }) => {
+        const response = await publicApi.post<{
+            status: string;
+            order_status: string;
+        }>(`events/${eventId}/order/${orderShortId}/razorpay/verify`, data);
+        return response.data;
+    },
+
     findOrderStripePaymentIntent: async (eventId: number, orderShortId: string) => {
         return await publicApi.get<StripePaymentIntent>(`events/${eventId}/order/${orderShortId}/stripe/payment_intent`);
     },

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HiEvents\Http\Actions\Events\Stats;
 
+use HiEvents\DomainObjects\Enums\Role;
 use HiEvents\DomainObjects\EventDomainObject;
 use HiEvents\Http\Actions\BaseAction;
 use HiEvents\Services\Domain\Event\EventCountsFetchService;
@@ -18,7 +19,7 @@ class GetEventCountsAction extends BaseAction
 
     public function __invoke(int $eventId): JsonResponse
     {
-        $this->isActionAuthorized($eventId, EventDomainObject::class);
+        $this->isActionAuthorized($eventId, EventDomainObject::class, Role::VIEWER);
 
         return $this->resourceResponse(
             JsonResource::class,

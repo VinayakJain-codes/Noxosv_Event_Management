@@ -19,5 +19,6 @@ class CompleteOrderOrderDTO extends BaseDTO
         public readonly ?Collection $questions,
         public readonly ?array $address = [],
         public readonly bool $opted_into_marketing = false,
+        public readonly ?string $enrollment_no = null,
     ) {}
 }

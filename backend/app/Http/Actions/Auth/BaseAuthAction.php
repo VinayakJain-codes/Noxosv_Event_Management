@@ -15,11 +15,15 @@ abstract class BaseAuthAction extends BaseAction
 {
     protected function getAuthCookie(string $token): SymfonyCookie
     {
+        $isSecure = request()->isSecure()
+            || request()->header('X-Forwarded-Proto') === 'https'
+            || str_starts_with(config('app.url', ''), 'https://');
+
         return Cookie::make(
             name: 'token',
             value: $token,
-            secure: true,
-            sameSite: 'None',
+            secure: $isSecure,
+            sameSite: $isSecure ? 'None' : 'Lax',
         );
     }
 

@@ -96,9 +96,18 @@ const Users = () => {
                 <Badge variant="outline">
                     <Group gap={5}>
                         {user.role === 'ORGANIZER' && <IconUser size={14}/>}
-                        {user.role === 'ADMIN' && <IconUserShield size={14}/>} {user.role === 'ADMIN' ? t`Admin` : user.role === 'ORGANIZER' ? t`Organizer` : user.role}
+                        {user.role === 'ADMIN' && <IconUserShield size={14}/>}
+                        {user.role === 'VIEWER' && <IconEye size={14}/>}
+                        {user.role === 'ADMIN' ? t`Admin` : user.role === 'ORGANIZER' ? t`Organizer` : user.role === 'VIEWER' ? t`Viewer` : user.role}
                     </Group>
                 </Badge>
+                {user.role === 'VIEWER' && !!user.assigned_event_ids?.length && (
+                    <Text size="xs" c="dimmed" mt={2}>
+                        {user.assigned_event_ids.length === 1
+                            ? t`1 assigned event`
+                            : `${user.assigned_event_ids.length} ${t`assigned events`}`}
+                    </Text>
+                )}
             </Table.Td>
             <Table.Td>
                 {user.last_login_at ? relativeDate(user.last_login_at) : t`Never`}

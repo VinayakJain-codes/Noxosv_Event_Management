@@ -135,6 +135,10 @@ class PartialUpdateEventSettingsHandler
                 // Waitlist settings
                 'waitlist_auto_process' => $eventSettingsDTO->settings['waitlist_auto_process'] ?? $existingSettings->getWaitlistAutoProcess(),
                 'waitlist_offer_timeout_minutes' => $eventSettingsDTO->settings['waitlist_offer_timeout_minutes'] ?? $existingSettings->getWaitlistOfferTimeoutMinutes(),
+
+                // Enrollment settings
+                'enrollment_enabled' => $eventSettingsDTO->settings['enrollment_enabled'] ?? $existingSettings->getEnrollmentEnabled(),
+                'enrollment_restrict_to_one_ticket' => $eventSettingsDTO->settings['enrollment_restrict_to_one_ticket'] ?? $existingSettings->getEnrollmentRestrictToOneTicket(),
             ]),
         );
     }

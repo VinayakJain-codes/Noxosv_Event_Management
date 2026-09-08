@@ -90,6 +90,10 @@ class UpdateEventSettingsDTO extends BaseDTO
         public readonly ?int $waitlist_offer_timeout_minutes = null,
 
         public readonly ?string $get_tickets_button_text = null,
+
+        // Enrollment settings
+        public readonly bool $enrollment_enabled = false,
+        public readonly bool $enrollment_restrict_to_one_ticket = true,
     ) {}
 
     public static function createWithDefaults(
@@ -125,7 +129,7 @@ class UpdateEventSettingsDTO extends BaseDTO
             price_display_mode: PriceDisplayMode::INCLUSIVE,
 
             // Payment defaults
-            payment_providers: [PaymentProviders::STRIPE->value],
+            payment_providers: [PaymentProviders::RAZORPAY->value],
             offline_payment_instructions: null,
 
             // Invoice defaults
@@ -169,6 +173,10 @@ class UpdateEventSettingsDTO extends BaseDTO
 
             // Self-service defaults
             allow_attendee_self_edit: false,
+
+            // Enrollment defaults
+            enrollment_enabled: false,
+            enrollment_restrict_to_one_ticket: true,
         );
     }
 }

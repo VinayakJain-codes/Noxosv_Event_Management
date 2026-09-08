@@ -1,4 +1,4 @@
-import {useParams} from "react-router";
+import {useNavigate, useParams} from "react-router";
 import {useGetAttendees} from "../../../queries/useGetAttendees.ts";
 import {PageTitle} from "../../common/PageTitle";
 import {PageBody} from "../../common/PageBody";
@@ -6,7 +6,8 @@ import {AttendeeTable} from "../../common/AttendeeTable";
 import {SearchBarWrapper} from "../../common/SearchBar";
 import {Pagination} from "../../common/Pagination";
 import {Button, Group} from "@mantine/core";
-import {IconDownload, IconPlus} from "@tabler/icons-react";
+import {IconDownload, IconPlus, IconQrcode} from "@tabler/icons-react";
+import {useGetMe} from "../../../queries/useGetMe.ts";
 import {ToolBar} from "../../common/ToolBar";
 import {TableSkeleton} from "../../common/TableSkeleton";
 import {useFilterQueryParamSync} from "../../../hooks/useFilterQueryParamSync.ts";
@@ -33,6 +34,9 @@ const attendeeStatuses = [
 
 const Attendees = () => {
     const {eventId} = useParams();
+    const navigate = useNavigate();
+    const {data: me} = useGetMe();
+    const isViewer = me?.role === 'VIEWER';
     const [searchParams, setSearchParams] = useFilterQueryParamSync();
     const attendeesQuery = useGetAttendees(eventId, searchParams as QueryFilters);
     const attendees = attendeesQuery?.data?.data;
@@ -249,9 +253,20 @@ const Attendees = () => {
                     resultCount={pagination?.total}
                     resultLabel={t`attendees`}
                 >
-                    <Button color={'green'} size={'sm'} data-testid="attendee-create-button" onClick={openCreateModal} rightSection={<IconPlus/>}>
-                        {t`Create`}
-                    </Button>
+                    {isViewer ? (
+                        <Button
+                            color={'blue'}
+                            size={'sm'}
+                            onClick={() => navigate(`/manage/event/${eventId}/check-in`)}
+                            leftSection={<IconQrcode size={16}/>}
+                        >
+                            {t`Scan QR Codes`}
+                        </Button>
+                    ) : (
+                        <Button color={'green'} size={'sm'} data-testid="attendee-create-button" onClick={openCreateModal} rightSection={<IconPlus/>}>
+                            {t`Create`}
+                        </Button>
+                    )}
 
                     <Button color={'green'}
                             size={'sm'}

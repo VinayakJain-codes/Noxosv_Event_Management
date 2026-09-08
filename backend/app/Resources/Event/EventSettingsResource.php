@@ -86,6 +86,10 @@ class EventSettingsResource extends JsonResource
             // Waitlist settings
             'waitlist_auto_process' => $this->getWaitlistAutoProcess(),
             'waitlist_offer_timeout_minutes' => $this->getWaitlistOfferTimeoutMinutes(),
+
+            // Enrollment settings
+            'enrollment_enabled' => $this->getEnrollmentEnabled(),
+            'enrollment_restrict_to_one_ticket' => $this->getEnrollmentRestrictToOneTicket(),
         ];
     }
 }

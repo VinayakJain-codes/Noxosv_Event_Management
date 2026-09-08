@@ -18,4 +18,8 @@ interface UserRepositoryInterface extends RepositoryInterface
     public function findUsersByAccountId(int $accountId): ?Collection;
 
     public function getAllUsersWithAccounts(?string $search, int $perPage): LengthAwarePaginator;
+
+    public function syncAssignedEvents(int $userId, array $eventIds): void;
+
+    public function getAssignedEventIds(int $userId): array;
 }

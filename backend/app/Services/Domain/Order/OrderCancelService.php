@@ -15,6 +15,7 @@ use HiEvents\Events\CapacityChangedEvent;
 use HiEvents\Mail\Order\OrderCancelled;
 use HiEvents\Repository\Eloquent\Value\Relationship;
 use HiEvents\Repository\Interfaces\AttendeeRepositoryInterface;
+use HiEvents\Repository\Interfaces\EventEnrollmentRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventRepositoryInterface;
 use HiEvents\Repository\Interfaces\OrderRepositoryInterface;
 use HiEvents\Services\Domain\EventStatistics\EventStatisticsCancellationService;
@@ -39,6 +40,7 @@ class OrderCancelService
         private readonly DomainEventDispatcherService $domainEventDispatcherService,
         private readonly EventStatisticsCancellationService $eventStatisticsCancellationService,
         private readonly RevertWaitlistOffersForCancelledOrderService $revertWaitlistOffersService,
+        private readonly EventEnrollmentRepositoryInterface $enrollmentRepository,
     ) {}
 
     /**
@@ -52,6 +54,17 @@ class OrderCancelService
             $this->adjustProductQuantities($order);
             $this->cancelAttendees($order);
             $this->updateOrderStatus($order);
+
+            $this->enrollmentRepository->updateWhere(
+                attributes: [
+                    'is_used' => false,
+                    'used_by_order_id' => null,
+                ],
+                where: [
+                    'used_by_order_id' => $order->getId(),
+                ],
+            );
+
             $capacityEvents = $this->revertWaitlistOffersService->revertOffersForOrder($order->getId());
 
             $this->sendOrderCancelledEmail($order);

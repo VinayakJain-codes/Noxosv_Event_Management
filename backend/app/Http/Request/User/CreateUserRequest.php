@@ -20,6 +20,8 @@ class CreateUserRequest extends BaseRequest
                 'required',
                 'email',
             ],
+            'event_ids' => 'nullable|array',
+            'event_ids.*' => 'integer|exists:events,id',
         ];
     }
 }

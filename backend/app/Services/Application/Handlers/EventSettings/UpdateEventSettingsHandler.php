@@ -105,6 +105,10 @@ class UpdateEventSettingsHandler
                     // Waitlist settings
                     'waitlist_auto_process' => $settings->waitlist_auto_process,
                     'waitlist_offer_timeout_minutes' => $settings->waitlist_offer_timeout_minutes,
+
+                    // Enrollment settings
+                    'enrollment_enabled' => $settings->enrollment_enabled,
+                    'enrollment_restrict_to_one_ticket' => $settings->enrollment_restrict_to_one_ticket,
                 ],
                 where: [
                     'event_id' => $settings->event_id,

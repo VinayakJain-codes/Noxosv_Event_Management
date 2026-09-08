@@ -20,6 +20,7 @@ import {
     IconTicket,
     IconTrendingUp,
     IconUserQuestion,
+    IconUserCheck,
     IconUsers,
     IconUsersGroup,
     IconWebhook,
@@ -129,6 +130,7 @@ const EventLayout = () => {
         // 4. GUESTS
         {label: t`Guest Management`},
         {link: 'attendees', label: t`Attendees`, icon: IconUsers, badge: eventCounts?.total_attendees_registered},
+        {link: 'enrollments', label: t`Enrollments / Whitelist`, icon: IconUserCheck},
         {link: 'check-in', label: t`Check-In Lists`, icon: IconQrcode},
         {link: 'messages', label: t`Messages`, icon: IconSend},
         {link: 'sold-out-waitlist', label: t`Waitlist`, icon: IconListCheck},
@@ -143,12 +145,21 @@ const EventLayout = () => {
         {label: t`Integrations`},
         {link: 'widget', label: t`Widget Embed`, icon: IconDeviceTabletCode},
         {link: 'webhooks', label: t`Webhooks`, icon: IconWebhook},
-
-
     ];
+
+    const viewerNavItems: NavItem[] = [
+        {link: '/manage/organizer/' + event?.organizer?.id, label: t`Organizer Dashboard`, icon: IconArrowLeft},
+        {label: t`Event Management`},
+        {link: 'attendees', label: t`Attendees`, icon: IconUsers, badge: eventCounts?.total_attendees_registered},
+        {link: 'orders', label: t`Orders`, icon: IconReceipt, badge: eventCounts?.total_orders},
+        {link: 'check-in', label: t`Check-In Lists`, icon: IconQrcode},
+    ];
+
+    const effectiveNavItems = me?.role === 'VIEWER' ? viewerNavItems : navItems;
+
     const navItemsWithLoading = !isEventSettingsFetched || !isEventFetched
-        ? navItems.map(item => item.link ? {...item, loading: true} : item)
-        : navItems;
+        ? effectiveNavItems.map(item => item.link ? {...item, loading: true} : item)
+        : effectiveNavItems;
 
     const screenWidth = useWindowWidth();
     const breadcrumbItemsWidth = screenWidth > 1100 ? 60 : 23;
@@ -202,7 +213,7 @@ const EventLayout = () => {
             navItems={navItemsWithLoading}
             breadcrumbItems={breadcrumbItems}
             entityType="event"
-            topBarContent={(
+            topBarContent={me?.role !== 'VIEWER' ? (
                 <div className={classes.statusToggleContainer}>
                     {isEventFetched && (
                         <TopBarButton
@@ -221,7 +232,7 @@ const EventLayout = () => {
                         </TopBarButton>
                     )}
                 </div>
-            )}
+            ) : undefined}
             breadcrumbContentRight={(
                 <div className={classes.shareButton}>
                     {event && (

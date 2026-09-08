@@ -7,6 +7,7 @@ namespace HiEvents\Models;
 use HiEvents\DomainObjects\Generated\EventDomainObjectAbstract;
 use HiEvents\Models\Traits\HasImages;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -109,5 +110,11 @@ class Event extends BaseModel
             EventDomainObjectAbstract::ATTRIBUTES => 'array',
             EventDomainObjectAbstract::RECURRENCE_RULE => 'array',
         ];
+    }
+
+    public function assignedUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'event_users')
+            ->withTimestamps();
     }
 }

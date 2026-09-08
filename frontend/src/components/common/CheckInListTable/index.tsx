@@ -26,6 +26,7 @@ import {CellContext} from "@tanstack/react-table";
 import Truncate from "../Truncate";
 import {formatDateWithLocale} from "../../../utilites/dates.ts";
 import classes from './CheckInListTable.module.scss';
+import {useGetMe} from "../../../queries/useGetMe.ts";
 
 interface CheckInListTableProps {
     checkInLists: CheckInList[];
@@ -34,6 +35,8 @@ interface CheckInListTableProps {
 }
 
 export const CheckInListTable = ({checkInLists, openCreateModal, event}: CheckInListTableProps) => {
+    const {data: me} = useGetMe();
+    const isViewer = me?.role === 'VIEWER';
     const [editModalOpen, {open: openEditModal, close: closeEditModal}] = useDisclosure(false);
     const [selectedCheckInListId, setSelectedCheckInListId] = useState<IdParam>();
     const deleteMutation = useDeleteCheckInList();
@@ -68,6 +71,10 @@ export const CheckInListTable = ({checkInLists, openCreateModal, event}: CheckIn
                                     <Anchor
                                         className={classes.listName}
                                         onClick={() => {
+                                            if (isViewer) {
+                                                window.open(`/check-in/${list.short_id}`, '_blank');
+                                                return;
+                                            }
                                             setSelectedCheckInListId(list.id as IdParam);
                                             openEditModal();
                                         }}
@@ -187,14 +194,14 @@ export const CheckInListTable = ({checkInLists, openCreateModal, event}: CheckIn
                     cell: (info: CellContext<CheckInList, unknown>) => {
                         const list = info.row.original;
                         const manageItems = [
-                            {
+                            ...(!isViewer ? [{
                                 label: t`Edit Check-In List`,
                                 icon: <IconPencil size={14}/>,
                                 onClick: () => {
                                     setSelectedCheckInListId(list.id as IdParam);
                                     openEditModal();
                                 }
-                            },
+                            }] : []),
                             {
                                 label: t`Copy Check-In URL`,
                                 icon: <IconCopy size={14}/>,
@@ -218,7 +225,7 @@ export const CheckInListTable = ({checkInLists, openCreateModal, event}: CheckIn
                         const groups: {label: string; items: any[]}[] = [
                             {label: t`Manage`, items: manageItems},
                         ];
-                        if (!list.is_system_default) {
+                        if (!isViewer && !list.is_system_default) {
                             groups.push({
                                 label: t`Danger zone`,
                                 items: [
@@ -270,7 +277,7 @@ export const CheckInListTable = ({checkInLists, openCreateModal, event}: CheckIn
                 return true;
             });
         },
-        [eventId, isRecurring, event?.timezone, isMobile]
+        [eventId, isRecurring, event?.timezone, isMobile, isViewer]
     );
 
     if (checkInLists.length === 0) {
@@ -286,12 +293,14 @@ export const CheckInListTable = ({checkInLists, openCreateModal, event}: CheckIn
                                     Check-in lists help you manage event entry by day, area, or ticket type. You can link tickets to specific lists such as VIP zones or Day 1 passes and share a secure check-in link with staff. No account is required. Check-in works on mobile, desktop, or tablet, using a device camera or HID USB scanner.                                </p>
                             </Trans>
                         </p>
-                        <Button
-                            size={'xs'}
-                            leftSection={<IconPlus/>}
-                            color={'green'}
-                            onClick={() => openCreateModal()}>{t`Create Check-In List`}
-                        </Button>
+                        {!isViewer && (
+                            <Button
+                                size={'xs'}
+                                leftSection={<IconPlus/>}
+                                color={'green'}
+                                onClick={() => openCreateModal()}>{t`Create Check-In List`}
+                            </Button>
+                        )}
                     </>
                 )}
             />

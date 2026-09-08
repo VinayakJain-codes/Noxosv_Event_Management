@@ -51,6 +51,12 @@ class UserResource extends BaseResource
             $this->mergeWhen($this->getPendingEmail() !== null, [
                 'pending_email' => $this->getPendingEmail(),
             ]),
+            $this->mergeWhen($this->getTemporaryPassword() !== null, [
+                'temporary_password' => $this->getTemporaryPassword(),
+            ]),
+            $this->mergeWhen($this->getAssignedEventIds() !== null, [
+                'assigned_event_ids' => $this->getAssignedEventIds(),
+            ]),
         ];
     }
 }

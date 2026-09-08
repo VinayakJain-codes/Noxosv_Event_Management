@@ -21,12 +21,14 @@ class GetEventsAction extends BaseAction
 
     public function __invoke(Request $request): JsonResponse
     {
-        $this->minimumAllowedRole(Role::ORGANIZER);
+        $this->minimumAllowedRole(Role::VIEWER);
 
         $events = $this->getEventsHandler->handle(
             GetEventsDTO::fromArray([
                 'accountId' => $this->getAuthenticatedAccountId(),
                 'queryParams' => $this->getPaginationQueryParams($request),
+                'userId' => $this->getAuthenticatedUser()->getId(),
+                'userRole' => $this->getAuthenticatedUserRole()->value,
             ]),
         );
 

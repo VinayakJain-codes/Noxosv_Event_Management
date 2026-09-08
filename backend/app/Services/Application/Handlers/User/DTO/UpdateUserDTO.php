@@ -16,5 +16,6 @@ class UpdateUserDTO extends BaseDTO
         public readonly Role $role,
         public readonly UserStatus $status,
         public readonly int $updated_by_user_id,
+        public readonly ?array $event_ids = null,
     ) {}
 }

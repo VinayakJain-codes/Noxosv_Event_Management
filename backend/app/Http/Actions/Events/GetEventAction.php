@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HiEvents\Http\Actions\Events;
 
+use HiEvents\DomainObjects\Enums\Role;
 use HiEvents\DomainObjects\EventDomainObject;
 use HiEvents\DomainObjects\EventLocationDomainObject;
 use HiEvents\DomainObjects\EventOccurrenceDomainObject;
@@ -31,7 +32,7 @@ class GetEventAction extends BaseAction
 
     public function __invoke(int $eventId): JsonResponse
     {
-        $this->isActionAuthorized($eventId, EventDomainObject::class);
+        $this->isActionAuthorized($eventId, EventDomainObject::class, Role::VIEWER);
 
         $event = $this->eventRepository
             ->loadRelation(new Relationship(domainObject: OrganizerDomainObject::class, name: 'organizer'))

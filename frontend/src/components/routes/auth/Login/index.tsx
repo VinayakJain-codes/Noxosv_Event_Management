@@ -38,6 +38,9 @@ const Login = () => {
 
         onSuccess: (response: LoginResponse) => {
             if (response.token) {
+                if (typeof window !== 'undefined') {
+                    window.localStorage?.setItem('token', response.token);
+                }
                 redirectToPreviousUrl();
                 return;
             }
