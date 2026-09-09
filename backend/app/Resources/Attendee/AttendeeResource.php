@@ -52,11 +52,15 @@ class AttendeeResource extends JsonResource
                 value: fn () => new OrderResource($this->getOrder())
             ),
             'question_answers' => $this->when(
-                condition: $this->getQuestionAndAnswerViews() !== null,
-                value: fn () => QuestionAnswerViewResource::collection(
-                    $this->getQuestionAndAnswerViews()
-                        ?->filter(fn ($qav) => $qav->getBelongsTo() === QuestionBelongsTo::PRODUCT->name)
-                )
+                condition: $this->getQuestionAndAnswerViews() !== null || ($this->getOrder()?->getQuestionAndAnswerViews() !== null),
+                value: function () {
+                    $attendeeAnswers = $this->getQuestionAndAnswerViews() ?? collect();
+                    $orderAnswers = $this->getOrder()?->getQuestionAndAnswerViews() ?? collect();
+                    $all = $attendeeAnswers->merge($orderAnswers)->unique(function ($qav) {
+                        return $qav->getQuestionId() ?? $qav->getId();
+                    });
+                    return QuestionAnswerViewResource::collection($all);
+                }
             ),
             'created_at' => $this->getCreatedAt(),
             'updated_at' => $this->getUpdatedAt(),

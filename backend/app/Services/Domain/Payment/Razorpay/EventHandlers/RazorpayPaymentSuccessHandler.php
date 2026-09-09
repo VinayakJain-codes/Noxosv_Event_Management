@@ -16,6 +16,7 @@ use HiEvents\Events\OrderStatusChangedEvent;
 use HiEvents\Repository\Eloquent\Value\Relationship;
 use HiEvents\Repository\Interfaces\AffiliateRepositoryInterface;
 use HiEvents\Repository\Interfaces\AttendeeRepositoryInterface;
+use HiEvents\Repository\Interfaces\EventEnrollmentRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventSettingsRepositoryInterface;
 use HiEvents\Repository\Interfaces\OrderRepositoryInterface;
 use HiEvents\Repository\Interfaces\RazorpayPaymentRepositoryInterface;
@@ -41,6 +42,7 @@ class RazorpayPaymentSuccessHandler
         private readonly CacheRepository $cache,
         private readonly DomainEventDispatcherService $domainEventDispatcherService,
         private readonly EventSettingsRepositoryInterface $eventSettingsRepository,
+        private readonly EventEnrollmentRepositoryInterface $enrollmentRepository,
     ) {}
 
     /**
@@ -124,6 +126,15 @@ class RazorpayPaymentSuccessHandler
                 where: [
                     'order_id' => $updatedOrder->getId(),
                     'status' => AttendeeStatus::AWAITING_PAYMENT->name,
+                ]
+            );
+
+            $this->enrollmentRepository->updateWhere(
+                attributes: [
+                    'is_used' => true,
+                ],
+                where: [
+                    'used_by_order_id' => $updatedOrder->getId(),
                 ]
             );
 

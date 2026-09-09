@@ -6,6 +6,8 @@ use HiEvents\DomainObjects\EventLocationDomainObject;
 use HiEvents\DomainObjects\EventOccurrenceDomainObject;
 use HiEvents\DomainObjects\Generated\AttendeeDomainObjectAbstract;
 use HiEvents\DomainObjects\LocationDomainObject;
+use HiEvents\DomainObjects\OrderDomainObject;
+use HiEvents\DomainObjects\QuestionAndAnswerViewDomainObject;
 use HiEvents\DomainObjects\ProductDomainObject;
 use HiEvents\DomainObjects\ProductPriceDomainObject;
 use HiEvents\Http\Actions\BaseAction;
@@ -30,6 +32,17 @@ class GetAttendeeActionPublic extends BaseAction
     public function __invoke(int $eventId, string $attendeeShortId): JsonResponse|Response
     {
         $attendee = $this->attendeeRepository
+            ->loadRelation(relationship: QuestionAndAnswerViewDomainObject::class)
+            ->loadRelation(new Relationship(
+                domainObject: OrderDomainObject::class,
+                nested: [
+                    new Relationship(
+                        domainObject: QuestionAndAnswerViewDomainObject::class,
+                        name: 'question_and_answer_views',
+                    ),
+                ],
+                name: 'order',
+            ))
             ->loadRelation(new Relationship(
                 domainObject: ProductDomainObject::class,
                 nested: [

@@ -2,57 +2,31 @@
 
 namespace HiEvents\Http\Actions\Questions;
 
+use HiEvents\DomainObjects\Enums\Role;
 use HiEvents\DomainObjects\EventDomainObject;
+use HiEvents\Exports\AnswersExport;
 use HiEvents\Http\Actions\BaseAction;
-use HiEvents\Jobs\Question\ExportAnswersJob;
-use HiEvents\Services\Infrastructure\Jobs\JobPollingService;
-use Illuminate\Http\JsonResponse;
+use HiEvents\Services\Application\Handlers\Question\ExportAnswersHandler;
 use Illuminate\Http\Request;
-use Throwable;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ExportQuestionAnswersAction extends BaseAction
 {
-    public function __construct(private JobPollingService $jobPollingService) {}
+    public function __construct(
+        private readonly AnswersExport $export,
+        private readonly ExportAnswersHandler $exportAnswersHandler,
+    ) {}
 
-    /**
-     * @throws Throwable
-     */
-    public function __invoke(Request $request, int $eventId): JsonResponse
+    public function __invoke(Request $request, int $eventId): BinaryFileResponse
     {
-        $this->isActionAuthorized($eventId, EventDomainObject::class);
+        $this->isActionAuthorized($eventId, EventDomainObject::class, Role::VIEWER);
 
-        if ($jobUuid = $request->get('job_uuid')) {
-            return $this->handleExistingJob($jobUuid, $eventId);
-        }
+        $questions = $this->exportAnswersHandler->handle($eventId);
 
-        return $this->startNewExportJob($eventId);
-    }
-
-    private function handleExistingJob(string $jobUuid, int $eventId): JsonResponse
-    {
-        $filePath = "event_$eventId/answers-$jobUuid.xlsx";
-
-        $jobStatus = $this->jobPollingService->checkJobStatus($jobUuid, $filePath);
-
-        return $this->jsonResponse([
-            'message' => $jobStatus->message,
-            'status' => $jobStatus->status->name,
-            'job_uuid' => $jobStatus->jobUuid,
-            'download_url' => $jobStatus->downloadUrl,
-        ]);
-    }
-
-    private function startNewExportJob(int $eventId): JsonResponse
-    {
-        $jobStatus = $this->jobPollingService->startJob(
-            jobName: "Export Questions for Event #$eventId",
-            jobs: [new ExportAnswersJob($eventId)]
+        return Excel::download(
+            $this->export->withData($questions),
+            "event-{$eventId}-question-answers.xlsx"
         );
-
-        return $this->jsonResponse([
-            'message' => $jobStatus->message,
-            'status' => $jobStatus->status->name,
-            'job_uuid' => $jobStatus->jobUuid,
-        ]);
     }
 }

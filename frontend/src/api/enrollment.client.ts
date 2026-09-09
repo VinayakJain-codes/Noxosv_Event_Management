@@ -37,6 +37,21 @@ export interface LookupEnrollmentResponse {
 }
 
 export const enrollmentClient = {
+    create: async (eventId: IdParam, data: {
+        enrollment_no: string;
+        first_name: string;
+        last_name?: string;
+        email?: string;
+        class?: string;
+        department?: string;
+    }) => {
+        const response = await api.post<GenericDataResponse<EventEnrollment>>(
+            `events/${eventId}/enrollments`,
+            data
+        );
+        return response.data;
+    },
+
     import: async (eventId: IdParam, file: File, mapping?: Record<string, string>) => {
         const formData = new FormData();
         formData.append('file', file);

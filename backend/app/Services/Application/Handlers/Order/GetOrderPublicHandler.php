@@ -18,6 +18,7 @@ use HiEvents\DomainObjects\OrderItemDomainObject;
 use HiEvents\DomainObjects\OrganizerDomainObject;
 use HiEvents\DomainObjects\ProductDomainObject;
 use HiEvents\DomainObjects\ProductPriceDomainObject;
+use HiEvents\DomainObjects\QuestionAndAnswerViewDomainObject;
 use HiEvents\DomainObjects\Status\OrderStatus;
 use HiEvents\Exceptions\UnauthorizedException;
 use HiEvents\Repository\Eloquent\Value\Relationship;
@@ -94,9 +95,17 @@ class GetOrderPublicHandler
                         ],
                         name: 'event_occurrence',
                     ),
+                    new Relationship(
+                        domainObject: QuestionAndAnswerViewDomainObject::class,
+                        name: 'question_and_answer_views',
+                    ),
                 ],
             ))
             ->loadRelation(new Relationship(domainObject: InvoiceDomainObject::class))
+            ->loadRelation(new Relationship(
+                domainObject: QuestionAndAnswerViewDomainObject::class,
+                name: 'question_and_answer_views',
+            ))
             ->loadRelation(new Relationship(
                 domainObject: OrderItemDomainObject::class,
                 nested: [

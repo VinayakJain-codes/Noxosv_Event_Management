@@ -6,6 +6,7 @@ use HiEvents\DomainObjects\AttendeeDomainObject;
 use HiEvents\DomainObjects\Status\AttendeeStatus;
 use HiEvents\Resources\EventOccurrence\EventOccurrenceResourcePublic;
 use HiEvents\Resources\Product\ProductMinimalResourcePublic;
+use HiEvents\Resources\Question\QuestionAnswerViewResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -45,6 +46,17 @@ class AttendeeResourcePublic extends JsonResource
                 ),
             ),
             'locale' => $this->getLocale(),
+            'question_answers' => $this->when(
+                condition: $this->getQuestionAndAnswerViews() !== null || ($this->getOrder()?->getQuestionAndAnswerViews() !== null),
+                value: function () {
+                    $attendeeAnswers = $this->getQuestionAndAnswerViews() ?? collect();
+                    $orderAnswers = $this->getOrder()?->getQuestionAndAnswerViews() ?? collect();
+                    $all = $attendeeAnswers->merge($orderAnswers)->unique(function ($qav) {
+                        return $qav->getQuestionId() ?? $qav->getId();
+                    });
+                    return QuestionAnswerViewResource::collection($all);
+                }
+            ),
         ];
     }
 }

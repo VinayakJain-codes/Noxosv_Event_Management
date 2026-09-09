@@ -7,6 +7,7 @@ use HiEvents\DomainObjects\OrderDomainObject;
 use HiEvents\DomainObjects\Status\OrderStatus;
 use HiEvents\Exceptions\ResourceConflictException;
 use HiEvents\Exceptions\UnauthorizedException;
+use HiEvents\Repository\Interfaces\EventEnrollmentRepositoryInterface;
 use HiEvents\Repository\Interfaces\OrderRepositoryInterface;
 use HiEvents\Services\Infrastructure\Session\CheckoutSessionManagementService;
 use Illuminate\Log\Logger;
@@ -18,6 +19,7 @@ class AbandonOrderPublicHandler
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly CheckoutSessionManagementService $sessionService,
         private readonly Logger $logger,
+        private readonly EventEnrollmentRepositoryInterface $enrollmentRepository,
     ) {}
 
     /**
@@ -44,6 +46,16 @@ class AbandonOrderPublicHandler
         $this->orderRepository->updateFromArray($order->getId(), [
             OrderDomainObjectAbstract::STATUS => OrderStatus::ABANDONED->name,
         ]);
+
+        $this->enrollmentRepository->updateWhere(
+            attributes: [
+                'is_used' => false,
+                'used_by_order_id' => null,
+            ],
+            where: [
+                'used_by_order_id' => $order->getId(),
+            ],
+        );
 
         $this->logger->info('Order abandoned by customer', [
             'order_id' => $order->getId(),

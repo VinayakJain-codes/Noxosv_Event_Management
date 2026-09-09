@@ -43,13 +43,17 @@ class LookupEnrollmentActionPublic extends BaseAction
             return $this->errorResponse(__('Enrollment number not found.'), 404);
         }
 
-        if ($settings->getEnrollmentRestrictToOneTicket() && $enrollment->getIsUsed()) {
+        if ($settings->getEnrollmentRestrictToOneTicket()) {
+            $isUsed = $enrollment->getIsUsed();
             $usedByOrderId = $enrollment->getUsedByOrderId();
-            $isReallyUsed = true;
+
             if ($usedByOrderId) {
                 $order = $this->orderRepository->findById($usedByOrderId);
-                if ($order && in_array($order->getStatus(), [OrderStatus::CANCELLED->name, OrderStatus::ABANDONED->name], true)) {
-                    $isReallyUsed = false;
+                if (! $order
+                    || in_array($order->getStatus(), [OrderStatus::CANCELLED->name, OrderStatus::ABANDONED->name], true)
+                    || ($order->getStatus() === OrderStatus::RESERVED->name && $order->isReservedOrderExpired())
+                ) {
+                    $isUsed = false;
                     $this->enrollmentRepository->updateWhere(
                         attributes: [
                             'is_used' => false,
@@ -59,11 +63,13 @@ class LookupEnrollmentActionPublic extends BaseAction
                             'id' => $enrollment->getId(),
                         ],
                     );
+                } elseif ($order->getStatus() === OrderStatus::COMPLETED->name) {
+                    $isUsed = true;
                 }
             }
 
-            if ($isReallyUsed) {
-                return $this->errorResponse(__('This enrollment number has already been used.'), 422);
+            if ($isUsed) {
+                return $this->errorResponse(__('This enrollment number has already been used to purchase a ticket.'), 422);
             }
         }
 

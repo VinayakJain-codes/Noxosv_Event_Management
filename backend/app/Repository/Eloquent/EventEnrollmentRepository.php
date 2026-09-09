@@ -41,9 +41,22 @@ class EventEnrollmentRepository extends BaseRepository implements EventEnrollmen
             };
         }
 
+        if (! empty($params->filter_fields)) {
+            $params->filter_fields->each(function ($filterField) {
+                if ($filterField->field === EventEnrollmentDomainObjectAbstract::IS_USED) {
+                    $filterField->value = filter_var($filterField->value, FILTER_VALIDATE_BOOLEAN);
+                }
+            });
+
+            $this->applyFilterFields($params, EventEnrollmentDomainObject::getAllowedFilterFields());
+        }
+
+        $sortBy = $this->validateSortColumn($params->sort_by, EventEnrollmentDomainObject::class);
+        $sortDirection = $this->validateSortDirection($params->sort_direction, EventEnrollmentDomainObject::class);
+
         $this->model = $this->model->orderBy(
-            $params->sort_by ?: 'id',
-            $params->sort_direction ?: 'desc',
+            $sortBy,
+            $sortDirection,
         );
 
         return $this->paginateWhere(

@@ -26,6 +26,7 @@ use HiEvents\Exceptions\ResourceConflictException;
 use HiEvents\Repository\Eloquent\Value\Relationship;
 use HiEvents\Repository\Interfaces\AffiliateRepositoryInterface;
 use HiEvents\Repository\Interfaces\AttendeeRepositoryInterface;
+use HiEvents\Repository\Interfaces\EventEnrollmentRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventRepositoryInterface;
 use HiEvents\Repository\Interfaces\InvoiceRepositoryInterface;
 use HiEvents\Repository\Interfaces\OrderRepositoryInterface;
@@ -50,6 +51,7 @@ class MarkOrderAsPaidService
         private readonly OrderApplicationFeeService $orderApplicationFeeService,
         private readonly SendOrderDetailsService $sendOrderDetailsService,
         private readonly OccurrenceStatusValidator $occurrenceStatusValidator,
+        private readonly EventEnrollmentRepositoryInterface $enrollmentRepository,
     ) {}
 
     /**
@@ -119,6 +121,15 @@ class MarkOrderAsPaidService
             }
 
             $this->updateAttendeeStatuses($updatedOrder);
+
+            $this->enrollmentRepository->updateWhere(
+                attributes: [
+                    'is_used' => true,
+                ],
+                where: [
+                    'used_by_order_id' => $updatedOrder->getId(),
+                ]
+            );
 
             event(new OrderStatusChangedEvent(
                 order: $updatedOrder,

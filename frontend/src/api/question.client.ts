@@ -45,9 +45,11 @@ export const questionClient = {
             'answer': answer,
         });
     },
-    exportAnswers: async (eventId: IdParam): Promise<ExportResponse> => {
-        const response = await api.post(`events/${eventId}/questions/answers/export`, {});
-        return response.data;
+    exportAnswers: async (eventId: IdParam): Promise<Blob> => {
+        const response = await api.get(`events/${eventId}/questions/answers/export`, {
+            responseType: 'blob',
+        });
+        return new Blob([response.data]);
     },
     checkExportStatus: async (eventId: IdParam, jobUuid: IdParam): Promise<ExportResponse> => {
         const response = await api.get(`events/${eventId}/questions/answers/export?job_uuid=${jobUuid}`);

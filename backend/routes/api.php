@@ -116,6 +116,7 @@ use HiEvents\Http\Actions\EventOccurrences\ReactivateOccurrenceAction;
 use HiEvents\Http\Actions\EventOccurrences\UpdateEventOccurrenceAction;
 use HiEvents\Http\Actions\EventOccurrences\UpdateProductVisibilityAction;
 use HiEvents\Http\Actions\EventOccurrences\UpsertPriceOverrideAction;
+use HiEvents\Http\Actions\Enrollment\CreateEventEnrollmentAction;
 use HiEvents\Http\Actions\Enrollment\DeleteAllEventEnrollmentsAction;
 use HiEvents\Http\Actions\Enrollment\DeleteEventEnrollmentAction;
 use HiEvents\Http\Actions\Enrollment\ExportEventEnrollmentsAction;
@@ -402,6 +403,7 @@ $router->middleware(['auth:api'])->group(
 
         // Event Enrollments
         $router->post('/events/{event_id}/enrollments/import', ImportEventEnrollmentsAction::class);
+        $router->post('/events/{event_id}/enrollments', CreateEventEnrollmentAction::class);
         $router->get('/events/{event_id}/enrollments', GetEventEnrollmentsAction::class);
         $router->get('/events/{event_id}/enrollments/export', ExportEventEnrollmentsAction::class);
         $router->delete('/events/{event_id}/enrollments/{enrollment_id}', DeleteEventEnrollmentAction::class);

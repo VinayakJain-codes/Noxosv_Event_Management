@@ -9,6 +9,7 @@ use HiEvents\DomainObjects\EventDomainObject;
 use HiEvents\DomainObjects\EventLocationDomainObject;
 use HiEvents\DomainObjects\EventOccurrenceDomainObject;
 use HiEvents\DomainObjects\LocationDomainObject;
+use HiEvents\DomainObjects\OrderDomainObject;
 use HiEvents\DomainObjects\ProductDomainObject;
 use HiEvents\DomainObjects\ProductPriceDomainObject;
 use HiEvents\DomainObjects\QuestionAndAnswerViewDomainObject;
@@ -34,6 +35,16 @@ class GetAttendeeAction extends BaseAction
 
         $attendee = $this->attendeeRepository
             ->loadRelation(relationship: QuestionAndAnswerViewDomainObject::class)
+            ->loadRelation(new Relationship(
+                domainObject: OrderDomainObject::class,
+                nested: [
+                    new Relationship(
+                        domainObject: QuestionAndAnswerViewDomainObject::class,
+                        name: 'question_and_answer_views',
+                    ),
+                ],
+                name: 'order',
+            ))
             ->loadRelation(new Relationship(
                 domainObject: ProductDomainObject::class,
                 nested: [

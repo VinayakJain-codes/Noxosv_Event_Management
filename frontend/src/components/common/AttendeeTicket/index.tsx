@@ -133,6 +133,26 @@ export const AttendeeTicket = ({
                                 label={t`Price`}
                                 value={productPrice > 0 ? formatCurrency(productPrice, event?.currency) : t`Free`}
                             />
+
+                            {attendee.question_answers && attendee.question_answers.length > 0 && (
+                                attendee.question_answers.map((qa) => {
+                                    const rawVal = (qa as any).text_answer ?? qa.answer;
+                                    const val = Array.isArray(rawVal)
+                                        ? rawVal.join(', ')
+                                        : typeof rawVal === 'object' && rawVal !== null
+                                            ? (rawVal.answer ?? JSON.stringify(rawVal))
+                                            : String(rawVal ?? '');
+                                    if (!val) return null;
+                                    return (
+                                        <TicketField
+                                            key={qa.question_id || qa.title}
+                                            label={qa.title}
+                                            value={val}
+                                            span
+                                        />
+                                    );
+                                })
+                            )}
                         </dl>
 
                         {footerText && <p className={classes.note}>{footerText}</p>}

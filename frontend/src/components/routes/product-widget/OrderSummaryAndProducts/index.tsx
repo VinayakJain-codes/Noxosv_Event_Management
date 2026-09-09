@@ -102,6 +102,19 @@ const GuestListItem = ({
                 <div className={classes.guestDetails}>
                     <span className={classes.guestEmail}>{attendee.email}</span>
                     <span className={classes.guestProduct}>{productTitle}</span>
+                    {attendee.question_answers && attendee.question_answers.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
+                            {attendee.question_answers.map((qa) => {
+                                const val = (qa as any).text_answer || (Array.isArray(qa.answer) ? qa.answer.join(', ') : (typeof qa.answer === 'object' && qa.answer !== null ? (qa.answer.answer ?? JSON.stringify(qa.answer)) : String(qa.answer ?? '')));
+                                if (!val) return null;
+                                return (
+                                    <span key={qa.question_id || qa.title} style={{ fontSize: '12.5px', color: 'var(--mantine-color-dimmed)' }}>
+                                        {qa.title}: <strong style={{ color: 'var(--mantine-color-text)' }}>{val}</strong>
+                                    </span>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
             <div className={classes.guestActions}>

@@ -25,6 +25,7 @@ use HiEvents\Repository\Eloquent\StripePaymentsRepository;
 use HiEvents\Repository\Eloquent\Value\Relationship;
 use HiEvents\Repository\Interfaces\AffiliateRepositoryInterface;
 use HiEvents\Repository\Interfaces\AttendeeRepositoryInterface;
+use HiEvents\Repository\Interfaces\EventEnrollmentRepositoryInterface;
 use HiEvents\Repository\Interfaces\EventSettingsRepositoryInterface;
 use HiEvents\Repository\Interfaces\OrderRepositoryInterface;
 use HiEvents\Services\Domain\Order\OccurrenceStatusValidator;
@@ -56,6 +57,7 @@ class PaymentIntentSucceededHandler
         private readonly DomainEventDispatcherService $domainEventDispatcherService,
         private readonly OrderApplicationFeeService $orderApplicationFeeService,
         private readonly EventSettingsRepositoryInterface $eventSettingsRepository,
+        private readonly EventEnrollmentRepositoryInterface $enrollmentRepository,
         private readonly OccurrenceStatusValidator $occurrenceStatusValidator,
     ) {}
 
@@ -97,6 +99,15 @@ class PaymentIntentSucceededHandler
             $updatedOrder = $this->updateOrderStatuses($stripePayment);
 
             $this->updateAttendeeStatuses($updatedOrder);
+
+            $this->enrollmentRepository->updateWhere(
+                attributes: [
+                    'is_used' => true,
+                ],
+                where: [
+                    'used_by_order_id' => $updatedOrder->getId(),
+                ]
+            );
 
             $this->quantityUpdateService->updateQuantitiesFromOrder($updatedOrder);
 

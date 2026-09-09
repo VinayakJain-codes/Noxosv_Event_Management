@@ -110,18 +110,50 @@ class CompleteOrderHandler
                 }
 
                 if ($eventSettings->getEnrollmentRestrictToOneTicket()) {
+                    $usedByOrderId = $enrollment->getUsedByOrderId();
+
                     if ($enrollment->getIsUsed()) {
-                        $usedByOrderId = $enrollment->getUsedByOrderId();
                         $isReallyUsed = true;
-                        if ($usedByOrderId && $usedByOrderId !== $order->getId()) {
+                        if ($usedByOrderId) {
                             $previousOrder = $this->orderRepository->findById($usedByOrderId);
-                            if ($previousOrder && in_array($previousOrder->getStatus(), [OrderStatus::CANCELLED->name, OrderStatus::ABANDONED->name], true)) {
+                            if (! $previousOrder
+                                || in_array($previousOrder->getStatus(), [OrderStatus::CANCELLED->name, OrderStatus::ABANDONED->name], true)
+                                || ($previousOrder->getStatus() === OrderStatus::RESERVED->name && $previousOrder->isReservedOrderExpired())
+                            ) {
                                 $isReallyUsed = false;
+                                $this->enrollmentRepository->updateWhere(
+                                    attributes: [
+                                        'is_used' => false,
+                                        'used_by_order_id' => null,
+                                    ],
+                                    where: [
+                                        'id' => $enrollment->getId(),
+                                    ],
+                                );
                             }
                         }
 
                         if ($isReallyUsed && $usedByOrderId !== $order->getId()) {
                             throw new ResourceConflictException(__('This enrollment number has already been used to purchase a ticket.'));
+                        }
+                    }
+
+                    if ($usedByOrderId && $usedByOrderId !== $order->getId()) {
+                        $previousOrder = $this->orderRepository->findById($usedByOrderId);
+                        if ($previousOrder && $previousOrder->getStatus() === OrderStatus::RESERVED->name) {
+                            if ($previousOrder->isReservedOrderExpired()) {
+                                $this->enrollmentRepository->updateWhere(
+                                    attributes: [
+                                        'is_used' => false,
+                                        'used_by_order_id' => null,
+                                    ],
+                                    where: [
+                                        'id' => $enrollment->getId(),
+                                    ],
+                                );
+                            } else {
+                                throw new ResourceConflictException(__('A checkout session is already in progress for this enrollment number. Please complete it or wait a few minutes.'));
+                            }
                         }
                     }
 
@@ -134,9 +166,11 @@ class CompleteOrderHandler
                     }
                 }
 
+                // If payment is required, do NOT mark as used yet; wait for verified payment.
+                // Only mark as used immediately if this order is free (no payment required).
                 $this->enrollmentRepository->updateWhere(
                     attributes: [
-                        'is_used' => true,
+                        'is_used' => ! $order->isPaymentRequired(),
                         'used_by_order_id' => $order->getId(),
                     ],
                     where: [
@@ -265,7 +299,12 @@ class CompleteOrderHandler
 
     private function createOrderQuestions(Collection $questions, OrderDomainObject $order): void
     {
-        $questions->each(function (OrderQuestionsDTO $orderQuestionsDTO) use ($order) {
+        $attendees = $this->attendeeRepository->findWhere([
+            'order_id' => $order->getId(),
+        ]);
+        $firstAttendeeId = $attendees->first()?->getId();
+
+        $questions->each(function (OrderQuestionsDTO $orderQuestionsDTO) use ($order, $firstAttendeeId) {
             if (empty($orderQuestionsDTO->response)) {
                 return;
             }
@@ -273,6 +312,7 @@ class CompleteOrderHandler
                 'question_id' => $orderQuestionsDTO->question_id,
                 'answer' => $orderQuestionsDTO->response['answer'] ?? $orderQuestionsDTO->response,
                 'order_id' => $order->getId(),
+                'attendee_id' => $firstAttendeeId,
             ]);
         });
     }
