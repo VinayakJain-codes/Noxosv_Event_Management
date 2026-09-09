@@ -4,7 +4,7 @@ import {PageBody} from "../../common/PageBody";
 import {PageTitle} from "../../common/PageTitle";
 import {useGetEvent} from "../../../queries/useGetEvent";
 import {SearchBarWrapper} from "../../common/SearchBarWrapper";
-import {IconDownload, IconPlus, IconTrash, IconUpload} from "@tabler/icons-react";
+import {IconDownload, IconPlus, IconUpload} from "@tabler/icons-react";
 import {ToolBar} from "../../common/ToolBar";
 import {useFilterQueryParamSync} from "../../../hooks/useFilterQueryParamSync";
 import {QueryFilterOperator, QueryFilters} from "../../../types";
@@ -12,10 +12,8 @@ import {TableSkeleton} from "../../common/TableSkeleton";
 import {t} from "@lingui/macro";
 import {SortSelector} from "../../common/SortSelector";
 import {useGetEventEnrollments} from "../../../queries/useGetEventEnrollments";
-import {useDeleteAllEventEnrollments} from "../../../mutations/useDeleteAllEventEnrollments";
 import {EnrollmentTable} from "../../common/EnrollmentTable";
 import {enrollmentClient} from "../../../api/enrollment.client";
-import {confirmationDialog} from "../../../utilites/confirmationDialog";
 import {showSuccess, showError} from "../../../utilites/notifications";
 import {useState} from "react";
 import {RosterImportModal} from "./RosterImportModal";
@@ -27,7 +25,6 @@ export const Enrollments = () => {
     const enrollmentsQuery = useGetEventEnrollments(eventId, searchParams as QueryFilters);
     const enrollments = enrollmentsQuery?.data?.data;
     const pagination = enrollmentsQuery?.data?.meta;
-    const deleteAllMutation = useDeleteAllEventEnrollments();
     const [isExporting, setIsExporting] = useState(false);
     const [importModalOpen, setImportModalOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -68,17 +65,6 @@ export const Enrollments = () => {
         if (!file) return;
         setSelectedFile(file);
         setImportModalOpen(true);
-    };
-
-    const handleDeleteAll = () => {
-        confirmationDialog(
-            t`Are you sure you want to delete all enrollment records? This cannot be undone.`,
-            () => {
-                deleteAllMutation.mutate(eventId, {
-                    onSuccess: () => showSuccess(t`All enrollments deleted successfully`)
-                });
-            }, {confirm: t`Delete All`, cancel: t`Cancel`}
-        );
     };
 
     const handleExport = async () => {
@@ -188,16 +174,6 @@ export const Enrollments = () => {
                 resultLabel={t`enrollment records`}
             >
                 <Group gap="sm">
-                    {enrollments && enrollments.length > 0 && (
-                        <Button
-                            variant="default"
-                            color="red"
-                            onClick={handleDeleteAll}
-                            leftSection={<IconTrash size={16}/>}
-                        >
-                            {t`Delete All`}
-                        </Button>
-                    )}
                     <Button
                         variant="default"
                         onClick={handleExport}
